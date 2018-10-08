@@ -59,6 +59,8 @@
 #define RF_FREQUENCY                                    915000000 // Hz
 #define TX_OUTPUT_POWER                                 20        // 14 dBm
 
+#define TESTE_TRANSMITE
+
 #if USE_MODEM_LORA == 1
 
     #define LORA_BANDWIDTH                              2         // [0: 125 kHz,
@@ -469,6 +471,40 @@ int main(void)
 
         Radio.Rx( RX_TIMEOUT_VALUE );
 
+        // char my_fkg_msg[] = "Meu piru\r\n";
+
+        char msg_id[15];
+
+        int i;
+        int id = 0;
+
+#ifdef TESTE_TRANSMITE
+        while (1)
+        {
+            blue_led(1);
+
+            UIntToString(id, msg_id);
+
+            debug_msg(msg_id);
+
+            strcpy((char*)Buffer, (char*)msg_id);
+
+            // We fill the buffer with numbers for the payload
+
+            for(i = sizeof(msg_id); i < BufferSize; i++){
+                Buffer[i] = i - sizeof(msg_id);
+            }
+            SysCtlDelay(SysCtlClockGet() / 100);
+
+            Radio.Send(Buffer, BufferSize);
+
+            blue_led(0);
+
+            SysCtlDelay(SysCtlClockGet() / 2);
+
+            id++;
+        }
+#else
         while( 1 )
         {
             switch( State )
@@ -528,6 +564,7 @@ int main(void)
                 break;
             }
         }
+#endif
 }
 
 void OnTxDone( void )
