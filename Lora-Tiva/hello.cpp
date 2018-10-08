@@ -338,8 +338,7 @@ void ConfigIntSwitch2(int modo)
 // Print "Hello World!" to the UART on the evaluation board.
 //
 //*****************************************************************************
-int
-main(void)
+int main(void)
 {
     //
     // Enable lazy stacking for interrupt handlers.  This allows floating-point
@@ -367,14 +366,14 @@ main(void)
     //
     // Enable the GPIO pins for the Switch 1
     //
-    ConfigGPIOSwitch1();
-    ConfigIntSwitch1(0); //0-falling edge 1-rising edge
+    // ConfigGPIOSwitch1();
+    // ConfigIntSwitch1(0); //0-falling edge 1-rising edge
 
     //
     // Enable the GPIO pins for the Switch 2
     //
-    ConfigGPIOSwitch2();
-    ConfigIntSwitch2(0); //0-falling edge 1-rising edge
+    // ConfigGPIOSwitch2();
+    // ConfigIntSwitch2(0); //0-falling edge 1-rising edge
 
     //
     // Initialize the UART.
