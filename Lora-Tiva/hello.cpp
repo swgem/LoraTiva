@@ -145,6 +145,8 @@ int8_t SnrValue = 0.0;
 //volatile uint32_t ui32Loop;
 uint8_t led=0;
 
+static void UIntToString(int number, char * out);
+
 
 //fim das definições do LoRa********************
 
@@ -571,5 +573,35 @@ void OnRxError( void )
     debug_msg_if( DEBUG_MESSAGE, "> OnRxError\n\r" );
 }
 
+static void UIntToString(int number, char * out)
+{
+    int i = 0, j = 0;
+    int aux;
+    char caux;
 
+    // Gera numero swapped
+    do
+    {
+        aux = number % 10;
+        number = number / 10;
+
+        out[i] = (char)(aux + 0x30);
+
+        i++;
+    } while (number != 0);
+
+    // Deswap todos os algarismos
+    while (j != i / 2)
+    {
+        aux = out[j];
+        out[j] = out[i - j - 1];
+        out[i - j - 1] = aux;
+
+        j++;
+    };
+
+    out[i] = '\n';
+    out[i + 1] = '\r';
+    out[i + 2] = '\0';
+}
 
