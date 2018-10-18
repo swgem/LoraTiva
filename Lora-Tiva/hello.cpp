@@ -1,6 +1,6 @@
 //*****************************************************************************
 //
-// hello.c - Simple hello world example.
+// hello.cpp - Simple hello world example.
 //
 // Copyright (c) 2012-2014 Texas Instruments Incorporated.  All rights reserved.
 // Software License Agreement
@@ -20,7 +20,6 @@
 // 
 // This is part of revision 2.1.0.12573 of the EK-TM4C123GXL Firmware Package.
 //
-// ADAPTADO POR DAVI WEI TOKIKAWA e ERIKA MARIA CAPOTE BOTH
 //*****************************************************************************
 
 #include <stdint.h>
@@ -51,7 +50,6 @@
 #define debug_msg(X)  UARTprintf(X)
 #define debug_msg_if(D, X)  if(D){UARTprintf(X);}
 
-
 /* Set this flag to '1' to use the LoRa modulation or to '0' to use FSK modulation */
 #define USE_MODEM_LORA  1
 #define USE_MODEM_FSK   !USE_MODEM_LORA
@@ -59,7 +57,7 @@
 #define RF_FREQUENCY                                    915000000 // Hz
 #define TX_OUTPUT_POWER                                 20        // 14 dBm
 
-#define TESTE_TRANSMITE
+// #define TESTE_TRANSMITE
 
 #if USE_MODEM_LORA == 1
 
@@ -67,8 +65,8 @@
                                                                   //  1: 250 kHz,
                                                                   //  2: 500 kHz,
                                                                   //  3: Reserved]
-    #define LORA_SPREADING_FACTOR                       7         // [SF7..SF12]
-    #define LORA_CODINGRATE                             3         // [1: 4/5,
+    #define LORA_SPREADING_FACTOR                       12        // [SF7..SF12]
+    #define LORA_CODINGRATE                             4         // [1: 4/5,
                                                                   //  2: 4/6,
                                                                   //  3: 4/7,
                                                                   //  4: 4/8]
@@ -94,14 +92,8 @@
     #error "Please define a modem in the compiler options."
 #endif
 
-#define RX_TIMEOUT_VALUE                                1000000   // in us
-#define BUFFER_SIZE                                     32        // Define the payload size here
-
-//#if( defined ( TARGET_KL25Z ) || defined ( TARGET_LPC11U6X ) )
-//DigitalOut led(LED2);
-//#else
-//DigitalOut led(LED1);
-//#endif
+#define RX_TIMEOUT_VALUE                                100000000   // in us
+#define BUFFER_SIZE                                     32          // Define the payload size here
 
 /*
  *  Global variables declarations
@@ -120,7 +112,7 @@ typedef enum
 
     CAD,
     CAD_DONE
-}AppStates_t;
+} AppStates_t;
 
 volatile AppStates_t State = LOWPOWER;
 
@@ -132,11 +124,10 @@ static RadioEvents_t RadioEvents;
 /*
  *  Global variables declarations
  */
-SX1276MB1xAS Radio( NULL );
+SX1276MB1xAS Radio(NULL);
 
-const uint8_t SendMsg1[] = "GAIOLA FECHADA                 ";
-const uint8_t SendMsg2[] = "GAIOLA ABERTA                  ";
-const uint8_t RecvMsg1[] = "OK                             ";
+// const uint8_t SendMsg1[] = "                               ";
+// const uint8_t RecvMsg1[] = "                               ";
 
 uint16_t BufferSize = BUFFER_SIZE;
 uint8_t Buffer[BUFFER_SIZE];
@@ -144,27 +135,10 @@ uint8_t Buffer[BUFFER_SIZE];
 int16_t RssiValue = 0.0;
 int8_t SnrValue = 0.0;
 
-//volatile uint32_t ui32Loop;
-uint8_t led=0;
-
 static void UIntToString(int number, char * out);
 
 
 //fim das definições do LoRa********************
-
-
-//*****************************************************************************
-//
-//! \addtogroup example_list
-//! <h1>Hello World (hello)</h1>
-//!
-//! A very simple ``hello world'' example.  It simply displays ``Hello World!''
-//! on the UART and is a starting point for more complicated applications.
-//!
-//! UART0, connected to the Virtual Serial Port and running at
-//! 115,200, 8-N-1, is used to display messages from this application.
-//
-//*****************************************************************************
 
 //*****************************************************************************
 //
@@ -183,8 +157,8 @@ __error__(char *pcFilename, uint32_t ui32Line)
 // Configure the UART and its pins.  This must be called before UARTprintf().
 //
 //*****************************************************************************
-void
-ConfigureUART(void)
+
+void ConfigureUART(void)
 {
     //
     // Enable the GPIO Peripheral used by the UART.
@@ -233,115 +207,10 @@ void blue_led(uint8_t led)
 	}
 }
 
-void ConfigGPIOSwitch1(void)
-{
-    GPIOPinTypeGPIOInput(GPIO_PORTF_BASE, GPIO_PIN_4);  //Switch 1
-    GPIOPadConfigSet(GPIO_PORTF_BASE ,GPIO_PIN_4,GPIO_STRENGTH_2MA,GPIO_PIN_TYPE_STD_WPU);
-}
-
-void ConfigGPIOSwitch2(void)
-{
-    GPIOPinTypeGPIOInput(GPIO_PORTF_BASE, GPIO_PIN_0);  //Switch 2
-    GPIOPadConfigSet(GPIO_PORTF_BASE ,GPIO_PIN_0,GPIO_STRENGTH_2MA,GPIO_PIN_TYPE_STD_WPU);
-}
-
-void PortFIntHandler()  //Função da interrupção
-{
-    uint32_t status = GPIOIntStatus(GPIO_PORTF_BASE,true);
-    uint8_t i;
-
-    if(status & GPIO_INT_PIN_4)
-    {
-        GPIOIntClear(GPIO_PORTF_BASE,GPIO_PIN_4);
-        //SEND LORA
-
-        if( BufferSize > 0 )
-        {
-            led = !led;
-            blue_led(led);
-
-            debug_msg( "Enviando: \"Gaiola Fechada!\"\r\n" );
-
-            strcpy( ( char* )Buffer, ( char* )SendMsg1 );
-
-            // We fill the buffer with numbers for the payload
-            for( i = 14; i < BufferSize; i++ )
-            {
-                Buffer[i] = i - 14;
-            }
-            SysCtlDelay(SysCtlClockGet() / 100 );
-
-            Radio.Send( Buffer, BufferSize );
-        }
-
-        GPIOIntClear(GPIO_PORTF_BASE,GPIO_PIN_4);
-    }
-    else if(status & GPIO_INT_PIN_0)
-    {
-        GPIOIntClear(GPIO_PORTF_BASE,GPIO_PIN_0);
-        //SEND LORA
-
-        if( BufferSize > 0 )
-        {
-            led = !led;
-            blue_led(led);
-
-            debug_msg( "Enviando: \"Gaiola Aberta!\"\r\n" );
-
-            strcpy( ( char* )Buffer, ( char* )SendMsg2 );
-
-            // We fill the buffer with numbers for the payload
-            for( i = 13; i < BufferSize; i++ )
-            {
-                Buffer[i] = i - 13;
-            }
-            SysCtlDelay(SysCtlClockGet() / 100 );
-
-            Radio.Send( Buffer, BufferSize );
-        }
-
-        GPIOIntClear(GPIO_PORTF_BASE,GPIO_PIN_0);
-    }
-}
-
-void ConfigIntSwitch1(int modo)
-{
-    GPIOIntClear(GPIO_PORTF_BASE, GPIO_PIN_4);
-    if(modo==0)
-    {
-        GPIOIntTypeSet(GPIO_PORTF_BASE,GPIO_PIN_4,GPIO_FALLING_EDGE);
-    }
-    else if(modo==1)
-    {
-        GPIOIntTypeSet(GPIO_PORTF_BASE,GPIO_PIN_4,GPIO_RISING_EDGE);
-    }
-    GPIOIntRegister(GPIO_PORTF_BASE,PortFIntHandler);
-    GPIOIntEnable(GPIO_PORTF_BASE, GPIO_INT_PIN_4);
-}
-
-void ConfigIntSwitch2(int modo)
-{
-    GPIOIntClear(GPIO_PORTF_BASE, GPIO_PIN_0);
-    if(modo==0)
-    {
-        GPIOIntTypeSet(GPIO_PORTF_BASE,GPIO_PIN_0,GPIO_FALLING_EDGE);
-    }
-    else if(modo==1)
-    {
-        GPIOIntTypeSet(GPIO_PORTF_BASE,GPIO_PIN_0,GPIO_RISING_EDGE);
-    }
-    GPIOIntRegister(GPIO_PORTF_BASE,PortFIntHandler);
-    GPIOIntEnable(GPIO_PORTF_BASE, GPIO_INT_PIN_0);
-}
-
-
-//*****************************************************************************
-//
-// Print "Hello World!" to the UART on the evaluation board.
-//
-//*****************************************************************************
 int main(void)
 {
+    int led = 0;
+
     //
     // Enable lazy stacking for interrupt handlers.  This allows floating-point
     // instructions to be used within interrupt handlers, but at the expense of
@@ -366,18 +235,6 @@ int main(void)
     ROM_GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_2);
 
     //
-    // Enable the GPIO pins for the Switch 1
-    //
-    // ConfigGPIOSwitch1();
-    // ConfigIntSwitch1(0); //0-falling edge 1-rising edge
-
-    //
-    // Enable the GPIO pins for the Switch 2
-    //
-    // ConfigGPIOSwitch2();
-    // ConfigIntSwitch2(0); //0-falling edge 1-rising edge
-
-    //
     // Initialize the UART.
     //
     ConfigureUART();
@@ -388,182 +245,178 @@ int main(void)
     debug_msg("Hello, LoRa!\n");
 
 
-        debug_msg( "\n\n\r     SX1276 TIVA Cage Trap application \n\n\r" );
+    debug_msg( "\n\n\r     SX1276 TIVA Cage Trap application \n\n\r" );
 
-        // Initialize Radio driver
-        RadioEvents.TxDone = OnTxDone;
-        RadioEvents.RxDone = OnRxDone;
-        RadioEvents.RxError = OnRxError;
-        RadioEvents.TxTimeout = OnTxTimeout;
-        RadioEvents.RxTimeout = OnRxTimeout;
-        Radio.Init( &RadioEvents );
+    // Initialize Radio driver
+    RadioEvents.TxDone = OnTxDone;
+    RadioEvents.RxDone = OnRxDone;
+    RadioEvents.RxError = OnRxError;
+    RadioEvents.TxTimeout = OnTxTimeout;
+    RadioEvents.RxTimeout = OnRxTimeout;
+    Radio.Init( &RadioEvents );
 
-        GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_4);
-        GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_4, 0xFF);
-        // verify the connection with the board
-        int32_t radio_version = Radio.Read( REG_VERSION );
-        while( Radio.Read( REG_VERSION ) == 0x00  )
-        {
+    GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_4);
+    GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_4, 0xFF);
+    // verify the connection with the board
+    int32_t radio_version = Radio.Read( REG_VERSION );
+    while( Radio.Read( REG_VERSION ) == 0x00  )
+    {
 
-        	GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_4, 0x00);
-        	SysCtlDelay(SysCtlClockGet() / (2*1000));
-        	GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_4, 0xFF);
-        	debug_msg( "Radio could not be detected!\n\r" );
-            SysCtlDelay(SysCtlClockGet() / 10 );
-        }
+    	GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_4, 0x00);
+    	SysCtlDelay(SysCtlClockGet() / (2*1000));
+    	GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_4, 0xFF);
+    	debug_msg( "Radio could not be detected!\n\r" );
+        SysCtlDelay(SysCtlClockGet() / 10 );
+    }
 
-        UARTprintf( "Radio Version: %d!\n\r",radio_version);
-        debug_msg_if( ( DEBUG_MESSAGE & ( Radio.DetectBoardType( ) == SX1276MB1LAS ) ) , "\n\r > Board Type: SX1276MB1LAS < \n\r" );
-        debug_msg_if( ( DEBUG_MESSAGE & ( Radio.DetectBoardType( ) == SX1276MB1MAS ) ) , "\n\r > Board Type: SX1276MB1MAS < \n\r" );
+    UARTprintf( "Radio Version: %d!\n\r",radio_version);
+    debug_msg_if( ( DEBUG_MESSAGE & ( Radio.DetectBoardType( ) == SX1276MB1LAS ) ) , "\n\r > Board Type: SX1276MB1LAS < \n\r" );
+    debug_msg_if( ( DEBUG_MESSAGE & ( Radio.DetectBoardType( ) == SX1276MB1MAS ) ) , "\n\r > Board Type: SX1276MB1MAS < \n\r" );
 
-        Radio.SetChannel( RF_FREQUENCY );
+    Radio.SetChannel( RF_FREQUENCY );
 
-    #if USE_MODEM_LORA == 1
+#if USE_MODEM_LORA == 1
 
-        debug_msg_if( LORA_FHSS_ENABLED, "\n\n\r             > LORA FHSS Mode < \n\n\r");
-        debug_msg_if( !LORA_FHSS_ENABLED, "\n\n\r             > LORA Mode < \n\n\r");
+    debug_msg_if( LORA_FHSS_ENABLED, "\n\n\r             > LORA FHSS Mode < \n\n\r");
+    debug_msg_if( !LORA_FHSS_ENABLED, "\n\n\r             > LORA Mode < \n\n\r");
 
-        Radio.SetTxConfig( MODEM_LORA, TX_OUTPUT_POWER, 0, LORA_BANDWIDTH,
-                             LORA_SPREADING_FACTOR, LORA_CODINGRATE,
-                             LORA_PREAMBLE_LENGTH, LORA_FIX_LENGTH_PAYLOAD_ON,
-                             LORA_CRC_ENABLED, LORA_FHSS_ENABLED, LORA_NB_SYMB_HOP,
-                             LORA_IQ_INVERSION_ON, 2000000 );
+    Radio.SetTxConfig( MODEM_LORA, TX_OUTPUT_POWER, 0, LORA_BANDWIDTH,
+                      LORA_SPREADING_FACTOR, LORA_CODINGRATE,
+                      LORA_PREAMBLE_LENGTH, LORA_FIX_LENGTH_PAYLOAD_ON,
+                      LORA_CRC_ENABLED, LORA_FHSS_ENABLED, LORA_NB_SYMB_HOP,
+                      LORA_IQ_INVERSION_ON, 2000000 );
 
-        Radio.SetRxConfig( MODEM_LORA, LORA_BANDWIDTH, LORA_SPREADING_FACTOR,
-                             LORA_CODINGRATE, 0, LORA_PREAMBLE_LENGTH,
-                             LORA_SYMBOL_TIMEOUT, LORA_FIX_LENGTH_PAYLOAD_ON, 0,
-                             LORA_CRC_ENABLED, LORA_FHSS_ENABLED, LORA_NB_SYMB_HOP,
-                             LORA_IQ_INVERSION_ON, true );
+    Radio.SetRxConfig( MODEM_LORA, LORA_BANDWIDTH, LORA_SPREADING_FACTOR,
+                      LORA_CODINGRATE, 0, LORA_PREAMBLE_LENGTH,
+                      LORA_SYMBOL_TIMEOUT, LORA_FIX_LENGTH_PAYLOAD_ON, 0,
+                      LORA_CRC_ENABLED, LORA_FHSS_ENABLED, LORA_NB_SYMB_HOP,
+                      LORA_IQ_INVERSION_ON, true );
 
-    #elif USE_MODEM_FSK == 1
+#elif USE_MODEM_FSK == 1
 
-        debug_msg("\n\n\r              > FSK Mode < \n\n\r");
-        Radio.SetTxConfig( MODEM_FSK, TX_OUTPUT_POWER, FSK_FDEV, 0,
-                             FSK_DATARATE, 0,
-                             FSK_PREAMBLE_LENGTH, FSK_FIX_LENGTH_PAYLOAD_ON,
-                             FSK_CRC_ENABLED, 0, 0, 0, 2000000 );
+    debug_msg("\n\n\r              > FSK Mode < \n\n\r");
+    Radio.SetTxConfig( MODEM_FSK, TX_OUTPUT_POWER, FSK_FDEV, 0,
+                      FSK_DATARATE, 0,
+                      FSK_PREAMBLE_LENGTH, FSK_FIX_LENGTH_PAYLOAD_ON,
+                      FSK_CRC_ENABLED, 0, 0, 0, 2000000 );
 
-        Radio.SetRxConfig( MODEM_FSK, FSK_BANDWIDTH, FSK_DATARATE,
-                             0, FSK_AFC_BANDWIDTH, FSK_PREAMBLE_LENGTH,
-                             0, FSK_FIX_LENGTH_PAYLOAD_ON, 0, FSK_CRC_ENABLED,
-                             0, 0, false, true );
+    Radio.SetRxConfig( MODEM_FSK, FSK_BANDWIDTH, FSK_DATARATE,
+                      0, FSK_AFC_BANDWIDTH, FSK_PREAMBLE_LENGTH,
+                      0, FSK_FIX_LENGTH_PAYLOAD_ON, 0, FSK_CRC_ENABLED,
+                      0, 0, false, true );
 
-    #else
+#else
 
-    #error "Please define a modem in the compiler options."
+#error "Please define a modem in the compiler options."
 
-    #endif
+#endif
 
-        debug_msg_if( DEBUG_MESSAGE, "Starting Infinite Loop\r\n" );
+    debug_msg_if( DEBUG_MESSAGE, "Starting Infinite Loop\r\n" );
 
-        GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_4);
-        GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_4, 0x00);
-        SysCtlDelay(SysCtlClockGet()/2000);
-        GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_4, 0xFF);
-        SysCtlDelay(SysCtlClockGet()/2000);
-        GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_4, 0x00);
+    GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_4);
+    GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_4, 0x00);
+    SysCtlDelay(SysCtlClockGet()/2000);
+    GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_4, 0xFF);
+    SysCtlDelay(SysCtlClockGet()/2000);
+    GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_4, 0x00);
 
-        led = 0;
-        //
-        // Turn off the BLUE LED.
-        //
-        GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, 0);
+    //
+    // Turn off the BLUE LED.
+    //
+    GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, 0);
 
-        Radio.Rx( RX_TIMEOUT_VALUE );
+    Radio.Rx( RX_TIMEOUT_VALUE );
 
-        // char my_fkg_msg[] = "Meu piru\r\n";
-
-        char msg_id[15];
-
-        int i;
-        int id = 0;
 
 #ifdef TESTE_TRANSMITE
-        while (1)
-        {
-            blue_led(1);
+    int i;
+    int id = 0;
 
-            UIntToString(id, msg_id);
+    while (1)
+    {
+        blue_led(1);
 
-            debug_msg(msg_id);
+        UIntToString(id, msg_id);
 
-            strcpy((char*)Buffer, (char*)msg_id);
+        debug_msg(msg_id);
 
-            // We fill the buffer with numbers for the payload
+        strcpy((char*)Buffer, (char*)msg_id);
 
-            for(i = sizeof(msg_id); i < BufferSize; i++){
-                Buffer[i] = i - sizeof(msg_id);
-            }
-            SysCtlDelay(SysCtlClockGet() / 100);
+        // We fill the buffer with numbers for the payload
 
-            Radio.Send(Buffer, BufferSize);
-
-            blue_led(0);
-
-            SysCtlDelay(SysCtlClockGet() / 2);
-
-            id++;
+        for(i = sizeof(msg_id); i < BufferSize; i++){
+            Buffer[i] = i - sizeof(msg_id);
         }
+        SysCtlDelay(SysCtlClockGet() / 100);
+
+        Radio.Send(Buffer, BufferSize);
+
+        blue_led(0);
+
+        SysCtlDelay(SysCtlClockGet() / 2);
+
+        id++;
+    }
 #else
-        while( 1 )
+    while( 1 )
+    {
+        switch( State )
         {
-            switch( State )
+        case RX:
+            if( BufferSize > 0 )
             {
-            case RX:
-                if( BufferSize > 0 )
-                {
-                    if( strncmp( ( const char* )Buffer, ( const char* )RecvMsg1, 2 ) == 0 )
-                    {
-                        led = !led;
-                        blue_led(led);
+                // if( strncmp( ( const char* )Buffer, ( const char* )RecvMsg1, 2 ) == 0 )
+                // {
+                    // led = !led;
+                    // blue_led(led);
 
-                        debug_msg( "Recebido: \"OK\"\r\n" );
-                    }
-                    else // valid reception but neither a OK message
-                    {
-                        Radio.Rx( RX_TIMEOUT_VALUE );
-                    }
-                }
-                State = LOWPOWER;
-                break;
-
-            case TX:
-                led = !led;
-                blue_led(led);
-
-                debug_msg( "ENVIANDO...\r\n" );
-
-                Radio.Rx( RX_TIMEOUT_VALUE );
-                State = LOWPOWER;
-                break;
-
-            case RX_TIMEOUT:
-                Radio.Rx( RX_TIMEOUT_VALUE );
-                State = LOWPOWER;
-                break;
-
-            case RX_ERROR:
-                // We have received a Packet with a CRC error, blink red led
-
-                //RED LED
-
-                Radio.Rx( RX_TIMEOUT_VALUE );
-                State = LOWPOWER;
-                break;
-
-            case TX_TIMEOUT:
-                Radio.Rx( RX_TIMEOUT_VALUE );
-                State = LOWPOWER;
-                break;
-
-            case LOWPOWER:
-                break;
-
-            default:
-                State = LOWPOWER;
-                break;
+                    // debug_msg( "Recebido: \"OK\"\r\n" );
+                // }
+                // else // valid reception but neither a OK message
+                // {
+                //     Radio.Rx( RX_TIMEOUT_VALUE );
+                // }
             }
+            State = LOWPOWER;
+            break;
+
+        case TX:
+            led = !led;
+            blue_led(led);
+
+            debug_msg( "ENVIANDO...\r\n" );
+
+            Radio.Rx( RX_TIMEOUT_VALUE );
+            State = LOWPOWER;
+            break;
+
+        case RX_TIMEOUT:
+            Radio.Rx( RX_TIMEOUT_VALUE );
+            State = LOWPOWER;
+            break;
+
+        case RX_ERROR:
+            // We have received a Packet with a CRC error, blink red led
+
+            //RED LED
+
+            Radio.Rx( RX_TIMEOUT_VALUE );
+            State = LOWPOWER;
+            break;
+
+        case TX_TIMEOUT:
+            Radio.Rx( RX_TIMEOUT_VALUE );
+            State = LOWPOWER;
+            break;
+
+        case LOWPOWER:
+            break;
+
+        default:
+            State = LOWPOWER;
+            break;
         }
+    }
 #endif
 }
 
@@ -613,7 +466,6 @@ static void UIntToString(int number, char * out)
 {
     int i = 0, j = 0;
     int aux;
-    char caux;
 
     // Gera numero swapped
     do
@@ -640,4 +492,3 @@ static void UIntToString(int number, char * out)
     out[i + 1] = '\r';
     out[i + 2] = '\0';
 }
-
