@@ -56,7 +56,8 @@ SX1276MB1xAS::SX1276MB1xAS( RadioEvents_t *events/*,
 {
     this->RadioEvents = events;
 
-    boardConnected =  SX1276MB1LAS;
+    boardConnected =  SX1276MB1MAS; //InAir9
+    //boardConnected =  SX1276MB1LAS; //InAir9B
 
     //liga o clock da porta E (necessário para o reset)
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOE);
