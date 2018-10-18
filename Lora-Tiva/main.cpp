@@ -36,98 +36,20 @@
 #include "driverlib/uart.h"
 #include "utils/uartstdio.h"
 
+#include "main.h"
+
 #include "lora.h"
 #include "sx1276/sx1276-hal.h"
 
-//início das definições do LoRa*****************
+/******************************************************************
+ * DECLARATION OF INTERNAL VARIABLES
+ ******************************************************************/
 
+static volatile AppStates_t State = LOWPOWER;
 
-
-
-/* Set this flag to '1' to display debug messages on the console */
-#define DEBUG_MESSAGE   1
-
-#define debug_msg(X)  UARTprintf(X)
-#define debug_msg_if(D, X)  if(D){UARTprintf(X);}
-
-/* Set this flag to '1' to use the LoRa modulation or to '0' to use FSK modulation */
-#define USE_MODEM_LORA  1
-#define USE_MODEM_FSK   !USE_MODEM_LORA
-
-#define RF_FREQUENCY                                    915000000 // Hz
-#define TX_OUTPUT_POWER                                 20        // 14 dBm
-
-// #define TESTE_TRANSMITE
-
-#if USE_MODEM_LORA == 1
-
-    #define LORA_BANDWIDTH                              2         // [0: 125 kHz,
-                                                                  //  1: 250 kHz,
-                                                                  //  2: 500 kHz,
-                                                                  //  3: Reserved]
-    #define LORA_SPREADING_FACTOR                       12        // [SF7..SF12]
-    #define LORA_CODINGRATE                             4         // [1: 4/5,
-                                                                  //  2: 4/6,
-                                                                  //  3: 4/7,
-                                                                  //  4: 4/8]
-    #define LORA_PREAMBLE_LENGTH                        8         // Same for Tx and Rx
-    #define LORA_SYMBOL_TIMEOUT                         5         // Symbols
-    #define LORA_FIX_LENGTH_PAYLOAD_ON                  false
-    #define LORA_FHSS_ENABLED                           false
-    #define LORA_NB_SYMB_HOP                            4
-    #define LORA_IQ_INVERSION_ON                        false
-    #define LORA_CRC_ENABLED                            true
-
-#elif USE_MODEM_FSK == 1
-
-    #define FSK_FDEV                                    25000     // Hz
-    #define FSK_DATARATE                                19200     // bps
-    #define FSK_BANDWIDTH                               50000     // Hz
-    #define FSK_AFC_BANDWIDTH                           83333     // Hz
-    #define FSK_PREAMBLE_LENGTH                         5         // Same for Tx and Rx
-    #define FSK_FIX_LENGTH_PAYLOAD_ON                   false
-    #define FSK_CRC_ENABLED                             true
-
-#else
-    #error "Please define a modem in the compiler options."
-#endif
-
-#define RX_TIMEOUT_VALUE                                100000000   // in us
-#define BUFFER_SIZE                                     32          // Define the payload size here
-
-/*
- *  Global variables declarations
- */
-typedef enum
-{
-    LOWPOWER = 0,
-    IDLE,
-
-    RX,
-    RX_TIMEOUT,
-    RX_ERROR,
-
-    TX,
-    TX_TIMEOUT,
-
-    CAD,
-    CAD_DONE
-} AppStates_t;
-
-volatile AppStates_t State = LOWPOWER;
-
-/*!
- * Radio events function pointer
- */
 static RadioEvents_t RadioEvents;
 
-/*
- *  Global variables declarations
- */
-SX1276MB1xAS Radio(NULL);
-
-// const uint8_t SendMsg1[] = "                               ";
-// const uint8_t RecvMsg1[] = "                               ";
+SX1276MB1xAS Radio { NULL };
 
 uint16_t BufferSize = BUFFER_SIZE;
 uint8_t Buffer[BUFFER_SIZE];
@@ -135,77 +57,22 @@ uint8_t Buffer[BUFFER_SIZE];
 int16_t RssiValue = 0.0;
 int8_t SnrValue = 0.0;
 
+// const uint8_t SendMsg1[] = "                               ";
+// const uint8_t RecvMsg1[] = "                               ";
+
+/******************************************************************
+ * DECLARATION OF INTERNAL FUNCTIONS
+ ******************************************************************/
+
 static void UIntToString(int number, char * out);
 
+static void ConfigureUART(void);
 
-//fim das definições do LoRa********************
+static void blue_led(uint8_t led);
 
-//*****************************************************************************
-//
-// The error routine that is called if the driver library encounters an error.
-//
-//*****************************************************************************
-#ifdef DEBUG
-void
-__error__(char *pcFilename, uint32_t ui32Line)
-{
-}
-#endif
-
-//*****************************************************************************
-//
-// Configure the UART and its pins.  This must be called before UARTprintf().
-//
-//*****************************************************************************
-
-void ConfigureUART(void)
-{
-    //
-    // Enable the GPIO Peripheral used by the UART.
-    //
-    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
-
-    //
-    // Enable UART0
-    //
-    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0);
-
-    //
-    // Configure GPIO Pins for UART mode.
-    //
-    ROM_GPIOPinConfigure(GPIO_PA0_U0RX);
-    ROM_GPIOPinConfigure(GPIO_PA1_U0TX);
-    ROM_GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
-
-    //
-    // Use the internal 16MHz oscillator as the UART clock source.
-    //
-    UARTClockSourceSet(UART0_BASE, UART_CLOCK_PIOSC);
-
-    //
-    // Initialize the UART for console I/O.
-    //
-    UARTStdioConfig(0, 115200, 16000000);
-}
-
-void blue_led(uint8_t led)
-{
-
-	if(led)
-	{
-		//
-		// Turn on the BLUE LED.
-		//
-		GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, GPIO_PIN_2);
-	}
-	else
-	{
-		//
-		// Turn off the BLUE LED.
-		//
-		GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, 0);
-	}
-}
+/******************************************************************
+ * DEFINITION OF EXTERNAL FUNCTIONS
+ ******************************************************************/
 
 int main(void)
 {
@@ -420,14 +287,14 @@ int main(void)
 #endif
 }
 
-void OnTxDone( void )
+void OnTxDone(void)
 {
     Radio.Sleep( );
     State = TX;
     debug_msg_if( DEBUG_MESSAGE, "> OnTxDone\n\r" );
 }
 
-void OnRxDone( uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr)
+void OnRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr)
 {
     Radio.Sleep( );
     BufferSize = size;
@@ -440,14 +307,14 @@ void OnRxDone( uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr)
 
 }
 
-void OnTxTimeout( void )
+void OnTxTimeout(void)
 {
     Radio.Sleep( );
     State = TX_TIMEOUT;
     debug_msg_if( DEBUG_MESSAGE, "> OnTxTimeout\n\r" );
 }
 
-void OnRxTimeout( void )
+void OnRxTimeout(void)
 {
     Radio.Sleep( );
     Buffer[ BufferSize-1 ] = 0;
@@ -455,12 +322,17 @@ void OnRxTimeout( void )
     debug_msg_if( DEBUG_MESSAGE, "> OnRxTimeout\n\r" );
 }
 
-void OnRxError( void )
+void OnRxError(void)
 {
     Radio.Sleep( );
     State = RX_ERROR;
     debug_msg_if( DEBUG_MESSAGE, "> OnRxError\n\r" );
 }
+
+
+/******************************************************************
+ * DEFINITION OF INTERNAL FUNCTIONS
+ ******************************************************************/
 
 static void UIntToString(int number, char * out)
 {
@@ -491,4 +363,56 @@ static void UIntToString(int number, char * out)
     out[i] = '\n';
     out[i + 1] = '\r';
     out[i + 2] = '\0';
+}
+
+/**
+ * Configure the UART and its pins.  This must be called before UARTprintf().
+ */
+static void ConfigureUART(void)
+{
+    //
+    // Enable the GPIO Peripheral used by the UART.
+    //
+    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
+
+    //
+    // Enable UART0
+    //
+    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0);
+
+    //
+    // Configure GPIO Pins for UART mode.
+    //
+    ROM_GPIOPinConfigure(GPIO_PA0_U0RX);
+    ROM_GPIOPinConfigure(GPIO_PA1_U0TX);
+    ROM_GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
+
+    //
+    // Use the internal 16MHz oscillator as the UART clock source.
+    //
+    UARTClockSourceSet(UART0_BASE, UART_CLOCK_PIOSC);
+
+    //
+    // Initialize the UART for console I/O.
+    //
+    UARTStdioConfig(0, 115200, 16000000);
+}
+
+static void blue_led(uint8_t led)
+{
+
+    if(led)
+    {
+        //
+        // Turn on the BLUE LED.
+        //
+        GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, GPIO_PIN_2);
+    }
+    else
+    {
+        //
+        // Turn off the BLUE LED.
+        //
+        GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, 0);
+    }
 }

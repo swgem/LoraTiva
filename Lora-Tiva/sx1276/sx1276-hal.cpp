@@ -180,7 +180,7 @@ void SX1276MB1xAS::SpiInit( void )
     GPIOPinConfigure(GPIO_PB7_SSI2TX);
 
 	GPIOPinTypeSSI(GPIO_PORTB_BASE, GPIO_PIN_4 | GPIO_PIN_6 | GPIO_PIN_7);
-    uint32_t frequencyToSet = 8000000;
+    // uint32_t frequencyToSet = 8000000;
     SSIConfigSetExpClk(SSI2_BASE/**/,SysCtlClockGet(),SSI_FRF_MOTO_MODE_0,SSI_MODE_MASTER,500000,8);
 
     //SSIConfigSetExpClk(SSI2_BASE/**/,SysCtlClockGet(),SSI_FRF_MOTO_MODE_0,SSI_MODE_MASTER, 2000000, 8);
