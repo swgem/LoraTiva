@@ -196,6 +196,8 @@ int main(void)
 
 
 #ifdef TESTE_TRANSMITE
+    char msg_id[15];
+
     int i;
     int id = 0;
 
@@ -243,6 +245,8 @@ int main(void)
                 // {
                 //     Radio.Rx( RX_TIMEOUT_VALUE );
                 // }
+
+                Radio.Rx( RX_TIMEOUT_VALUE );
             }
             State = LOWPOWER;
             break;
