@@ -49,13 +49,16 @@ static volatile AppStates_t State = LOWPOWER;
 
 static RadioEvents_t RadioEvents;
 
-SX1276MB1xAS Radio { NULL };
+static SX1276MB1xAS Radio { NULL };
 
-uint16_t BufferSize = BUFFER_SIZE;
-uint8_t Buffer[BUFFER_SIZE];
+static uint16_t BufferSize = BUFFER_SIZE;
+static uint8_t Buffer[BUFFER_SIZE];
 
-int16_t RssiValue = 0.0;
-int8_t SnrValue = 0.0;
+static int16_t RssiValue = 0.0;
+static int8_t SnrValue = 0.0;
+
+static uint16_t TimesReceived = 0;
+static uint16_t TimesError = 0;
 
 // const uint8_t SendMsg1[] = "                               ";
 // const uint8_t RecvMsg1[] = "                               ";
@@ -298,7 +301,7 @@ void OnTxDone(void)
     debug_msg_if( DEBUG_MESSAGE, "> OnTxDone\n\r" );
 }
 
-void OnRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr)
+void OnRxDone( uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr)
 {
     Radio.Sleep( );
     BufferSize = size;
@@ -307,8 +310,9 @@ void OnRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr)
     SnrValue = snr;
     State = RX;
     debug_msg_if( DEBUG_MESSAGE, "> OnRxDone\n\r" );
-    UARTprintf("size: %d, rss: %d, snr: %d, payload: %s",size,rssi,snr,payload);
-
+    UARTprintf("size: %d, rss: %d, snr: %d, payload: %s \n\r",size,rssi,snr,payload);
+    TimesReceived++;
+    UARTprintf("Received: %d, Error: %d, Sum: %d \n\r",TimesReceived, TimesError, (TimesReceived+TimesError));
 }
 
 void OnTxTimeout(void)
