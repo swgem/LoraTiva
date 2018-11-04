@@ -14,6 +14,8 @@
 
 // #define TESTE_TRANSMITE
 
+#define DelayMs(timeMs)    SysCtlDelay((SysCtlClockGet() / (1000*6)) * timeMs)
+
 // LORA Macros
 
 /* Set this flag to '1' to display debug messages on the console */
