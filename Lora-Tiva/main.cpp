@@ -354,6 +354,8 @@ void OnRxError(void)
     Radio.Sleep( );
     State = RX_ERROR;
     debug_msg_if( DEBUG_MESSAGE, "> OnRxError\n\r" );
+    TimesError++;
+    UARTprintf("Received: %d, Error: %d, Sum: %d \n\r",TimesReceived, TimesError, (TimesReceived+TimesError));
 }
 
 
