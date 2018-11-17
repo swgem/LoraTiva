@@ -36,6 +36,8 @@
 #include "driverlib/uart.h"
 #include "utils/uartstdio.h"
 
+#include "driverlib/ssi.h"
+
 #include "main.h"
 
 #include "lora.h"
@@ -72,6 +74,12 @@ static void UIntToString(int number, char * out);
 static void ConfigureUART(void);
 
 static void blue_led(uint8_t led);
+
+static void ConfigureSpiPreciseClk(void);
+
+static uint32_t GetCurrentTimeNs(void);
+
+static uint8_t GetBytePreciseTimeSpi(SPIState_t state);
 
 /******************************************************************
  * DEFINITION OF EXTERNAL FUNCTIONS
@@ -423,4 +431,84 @@ static void blue_led(uint8_t led)
         //
         GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, 0);
     }
+}
+
+static void ConfigureSpiPreciseClk(void)
+{
+    //
+    // PINs configuration for SPI
+    //
+
+    // mosi - SSI1Tx  - PD3
+    // miso - SSI1Rx  - PD2
+    // sclk - SSI1Clk - PD0
+    // nss  - SSIFss  - PD1
+
+    //
+    // Enable the GPIO pin for SSEL
+    //
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOD);
+    GPIOPinTypeGPIOOutput(GPIO_PORTD_BASE, GPIO_PIN_1);
+    GPIOPinWrite(GPIO_PORTD_BASE, GPIO_PIN_1, GPIO_PIN_1);
+
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOD);
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_SSI1);
+    GPIOPinConfigure(GPIO_PD0_SSI1CLK);
+    GPIOPinConfigure(GPIO_PD2_SSI1RX);
+    GPIOPinConfigure(GPIO_PD3_SSI1TX);
+
+    GPIOPinTypeSSI(GPIO_PORTD_BASE, GPIO_PIN_3 | GPIO_PIN_2 | GPIO_PIN_0);
+    // Baud rate : 1,125 MBits/s;
+    SSIConfigSetExpClk(SSI1_BASE,SysCtlClockGet(),SSI_FRF_MOTO_MODE_0,SSI_MODE_MASTER,1125000,8);
+    SSIEnable(SSI1_BASE);
+
+    //wait(0.1);
+    SysCtlDelay(SysCtlClockGet() / 10);
+}
+
+static uint32_t GetCurrentTimeNs(void)
+{
+    uint32_t curr_ticks = 0;
+    uint32_t curr_time_ns;
+
+    // Get ticks byte by byte from slave
+    curr_ticks = ((uint32_t)GetBytePreciseTimeSpi(r_ticks_byte0)) << 0;
+    curr_ticks |= ((uint32_t)GetBytePreciseTimeSpi(r_ticks_byte1)) << 8;
+    curr_ticks |= ((uint32_t)GetBytePreciseTimeSpi(r_ticks_byte2)) << 16;
+    curr_ticks |= ((uint32_t)GetBytePreciseTimeSpi(r_ticks_byte3)) << 24;
+
+    // Convert from ticks to ns
+    curr_time_ns = curr_ticks * NS_PER_TICK;
+
+    return curr_time_ns;
+}
+
+static uint8_t GetBytePreciseTimeSpi(SPIState_t state)
+{
+    uint32_t dummy = 0;
+    uint32_t r_data;
+    uint8_t r_byte;
+
+    // Nss = 0;
+    GPIOPinWrite(GPIO_PORTD_BASE, GPIO_PIN_1, 0);
+
+    // Send state to slave
+    SSIDataPut(SSI1_BASE, state);
+    while(SSIBusy(SSI1_BASE));
+
+    DelayMs(1);
+
+    // Get the byte related to the sent state
+    SSIDataPut(SSI1_BASE, dummy);
+    while(SSIBusy(SSI1_BASE));
+    SSIDataGet(SSI1_BASE, &r_data);
+
+    r_byte = (uint8_t)r_data;
+
+    // Nss = 1;
+    GPIOPinWrite(GPIO_PORTD_BASE, GPIO_PIN_1, GPIO_PIN_1);
+
+    DelayMs(1);
+
+    return r_byte;
 }

@@ -14,6 +14,8 @@
 
 // #define TESTE_TRANSMITE
 
+#define NS_PER_TICK             125
+
 #define DelayMs(timeMs)    SysCtlDelay((SysCtlClockGet() / (1000*6)) * timeMs)
 
 // LORA Macros
@@ -86,6 +88,14 @@ typedef enum
     CAD,
     CAD_DONE
 } AppStates_t;
+
+typedef enum
+{
+    r_ticks_byte0 = 0,
+    r_ticks_byte1,
+    r_ticks_byte2,
+    r_ticks_byte3
+} SPIState_t;
 
 /******************************************************************
  * DECLARATION OF EXTERNAL FUNCTIONS
