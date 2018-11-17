@@ -153,6 +153,17 @@ int main(void)
 
     Radio.SetChannel( RF_FREQUENCY );
 
+    ConfigureSpiPreciseClk();
+
+#ifdef TESTE_SPI
+    uint32_t curr_time_ns;
+
+    while(1)
+    {
+        curr_time_ns = GetCurrentTimeNs();
+    }
+#endif
+
 #if USE_MODEM_LORA == 1
 
     debug_msg_if( LORA_FHSS_ENABLED, "\n\n\r             > LORA FHSS Mode < \n\n\r");

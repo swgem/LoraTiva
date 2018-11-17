@@ -12,7 +12,9 @@
  * DECLARATION OF MACROS
  ******************************************************************/
 
-// #define TESTE_TRANSMITE
+#define TESTE_SPI
+
+#define TESTE_TRANSMITE
 
 #define NS_PER_TICK             125
 
