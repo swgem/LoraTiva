@@ -508,6 +508,7 @@ static uint8_t GetBytePreciseTimeSpi(SPIState_t state)
     // Send state to slave
     SSIDataPut(SSI1_BASE, state);
     while(SSIBusy(SSI1_BASE));
+    SSIDataGet(SSI1_BASE, &dummy);
 
     DelayMs(1);
 
