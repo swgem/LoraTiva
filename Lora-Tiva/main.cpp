@@ -452,28 +452,28 @@ static void ConfigureSpiPreciseClk(void)
     // PINs configuration for SPI
     //
 
-    // mosi - SSI1Tx  - PD3
-    // miso - SSI1Rx  - PD2
-    // sclk - SSI1Clk - PD0
-    // nss  - SSIFss  - PD1
+    // mosi - SSI0Tx  - PA5
+    // miso - SSI0Rx  - PA4
+    // sclk - SSI0Clk - PA2
+    // nss  - SSI0Fss  - PA3
 
     //
     // Enable the GPIO pin for SSEL
     //
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOD);
-    GPIOPinTypeGPIOOutput(GPIO_PORTD_BASE, GPIO_PIN_1);
-    GPIOPinWrite(GPIO_PORTD_BASE, GPIO_PIN_1, GPIO_PIN_1);
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
+    GPIOPinTypeGPIOOutput(GPIO_PORTA_BASE, GPIO_PIN_3);
+    GPIOPinWrite(GPIO_PORTA_BASE, GPIO_PIN_3, GPIO_PIN_3);
 
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOD);
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_SSI1);
-    GPIOPinConfigure(GPIO_PD0_SSI1CLK);
-    GPIOPinConfigure(GPIO_PD2_SSI1RX);
-    GPIOPinConfigure(GPIO_PD3_SSI1TX);
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_SSI0);
+    GPIOPinConfigure(GPIO_PA2_SSI0CLK);
+    GPIOPinConfigure(GPIO_PA4_SSI0RX);
+    GPIOPinConfigure(GPIO_PA5_SSI0TX);
 
-    GPIOPinTypeSSI(GPIO_PORTD_BASE, GPIO_PIN_3 | GPIO_PIN_2 | GPIO_PIN_0);
+    GPIOPinTypeSSI(GPIO_PORTA_BASE, GPIO_PIN_2 | GPIO_PIN_4 | GPIO_PIN_5);
     // Baud rate : 1,125 MBits/s;
-    SSIConfigSetExpClk(SSI1_BASE,SysCtlClockGet(),SSI_FRF_MOTO_MODE_0,SSI_MODE_MASTER,1125000,8);
-    SSIEnable(SSI1_BASE);
+    SSIConfigSetExpClk(SSI0_BASE,SysCtlClockGet(),SSI_FRF_MOTO_MODE_0,SSI_MODE_MASTER,1125000,8);
+    SSIEnable(SSI0_BASE);
 
     //wait(0.1);
     SysCtlDelay(SysCtlClockGet() / 10);
@@ -503,24 +503,24 @@ static uint8_t GetBytePreciseTimeSpi(SPIState_t state)
     uint8_t r_byte;
 
     // Nss = 0;
-    GPIOPinWrite(GPIO_PORTD_BASE, GPIO_PIN_1, 0);
+    GPIOPinWrite(GPIO_PORTA_BASE, GPIO_PIN_3, 0);
 
     // Send state to slave
-    SSIDataPut(SSI1_BASE, state);
-    while(SSIBusy(SSI1_BASE));
-    SSIDataGet(SSI1_BASE, &dummy);
+    SSIDataPut(SSI0_BASE, state);
+    while(SSIBusy(SSI0_BASE));
+    SSIDataGet(SSI0_BASE, &dummy);
 
     DelayMs(1);
 
     // Get the byte related to the sent state
-    SSIDataPut(SSI1_BASE, dummy);
-    while(SSIBusy(SSI1_BASE));
-    SSIDataGet(SSI1_BASE, &r_data);
+    SSIDataPut(SSI0_BASE, dummy);
+    while(SSIBusy(SSI0_BASE));
+    SSIDataGet(SSI0_BASE, &r_data);
 
     r_byte = (uint8_t)r_data;
 
     // Nss = 1;
-    GPIOPinWrite(GPIO_PORTD_BASE, GPIO_PIN_1, GPIO_PIN_1);
+    GPIOPinWrite(GPIO_PORTA_BASE, GPIO_PIN_3, GPIO_PIN_3);
 
     DelayMs(1);
 
