@@ -187,19 +187,6 @@ void SX1276MB1xAS::SpiInit( void )
 
     SSIEnable(SSI2_BASE);
 
-
-    //debug ssi
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_SSI0);
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
-    GPIOPinConfigure(GPIO_PA2_SSI0CLK);
-    GPIOPinConfigure(GPIO_PA3_SSI0FSS);
-    GPIOPinConfigure(GPIO_PA5_SSI0TX);
-    GPIOPinTypeSSI(GPIO_PORTA_BASE,GPIO_PIN_5|GPIO_PIN_3|GPIO_PIN_2);
-    SSIConfigSetExpClk(SSI0_BASE, SysCtlClockGet(), SSI_FRF_MOTO_MODE_0, SSI_MODE_MASTER, 8000000, 16);
-    SSIEnable(SSI0_BASE);
-
-
-
     //#if( defined ( TARGET_NUCLEO_L152RE ) ||  defined ( TARGET_LPC11U6X ) )
     //    spi.frequency( frequencyToSet );
     //#elif( defined ( TARGET_KL25Z ) ) //busclock frequency is halved -> double the spi frequency to compensate
