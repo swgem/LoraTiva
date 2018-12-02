@@ -220,35 +220,27 @@ int main(void)
 
 
 #ifdef TESTE_TRANSMITE
-    char msg_id[15];
-
-    int i;
-    int id = 0;
+    char msg_tx[2];
+    char msg_id = 0;
 
     while (1)
     {
         blue_led(1);
 
-        UIntToString(id, msg_id);
+        msg_tx[0] = DEVICE_ID;
+        msg_tx[1] = msg_id;
 
-        debug_msg(msg_id);
+        DelayMs(10);
 
-        strcpy((char*)Buffer, (char*)msg_id);
+        // debug_msg("ID do device: %i        ID da msg: %i\n", msg_tx[0], msg_id[1]);
 
-        // We fill the buffer with numbers for the payload
-
-        for(i = sizeof(msg_id); i < BufferSize; i++){
-            Buffer[i] = i - sizeof(msg_id);
-        }
-        SysCtlDelay(SysCtlClockGet() / 100);
-
-        Radio.Send(Buffer, BufferSize);
+        Radio.Send((uint8_t *)msg_tx, sizeof(msg_tx));
 
         blue_led(0);
 
-        SysCtlDelay(SysCtlClockGet() / 2);
+        DelayMs(1500);
 
-        id++;
+        msg_id++;
     }
 #else
     while( 1 )
@@ -333,10 +325,9 @@ void OnRxDone( uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr)
     RssiValue = rssi;
     SnrValue = snr;
     State = RX;
-    debug_msg_if( DEBUG_MESSAGE, "> OnRxDone\n\r" );
-    UARTprintf("size: %d, rss: %d, snr: %d, timestamp: %d, payload: %s \n\r",size,rssi,snr,curr_time_ns,payload);
+    UARTprintf("size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\n\r",size,rssi,snr,curr_time_ns,payload[0],payload[1]);
     TimesReceived++;
-    UARTprintf("Received: %d, Error: %d, Sum: %d \n\r",TimesReceived, TimesError, (TimesReceived+TimesError));
+    // UARTprintf("Received: %d, Error: %d, Sum: %d \n\r",TimesReceived, TimesError, (TimesReceived+TimesError));
 }
 
 void OnTxTimeout(void)

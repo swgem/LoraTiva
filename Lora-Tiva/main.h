@@ -16,6 +16,8 @@
 
 #define TESTE_TRANSMITE
 
+#define DEVICE_ID               37
+
 #define NS_PER_TICK             125
 
 #define DelayMs(timeMs)    SysCtlDelay((SysCtlClockGet() / (1000*6)) * timeMs)
