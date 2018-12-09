@@ -989,14 +989,14 @@ void SX1276::Rx( uint32_t timeout )
                 Write( REG_LR_IRQFLAGSMASK, //RFLR_IRQFLAGS_RXTIMEOUT |
                                                   //RFLR_IRQFLAGS_RXDONE |
                                                   //RFLR_IRQFLAGS_PAYLOADCRCERROR |
-                                                  RFLR_IRQFLAGS_VALIDHEADER |
+                                                  //RFLR_IRQFLAGS_VALIDHEADER |
                                                   RFLR_IRQFLAGS_TXDONE |
                                                   RFLR_IRQFLAGS_CADDONE |
                                                   RFLR_IRQFLAGS_FHSSCHANGEDCHANNEL |
                                                   RFLR_IRQFLAGS_CADDETECTED );
                                               
-                // DIO0=RxDone
-                Write( REG_DIOMAPPING1, ( Read( REG_DIOMAPPING1 ) & RFLR_DIOMAPPING1_DIO0_MASK ) | RFLR_DIOMAPPING1_DIO0_00 );
+                // DIO0=RxDone, DIO3=RFLR_IRQFLAGS_VALIDHEADER
+                Write( REG_DIOMAPPING1, ( Read( REG_DIOMAPPING1 ) & RFLR_DIOMAPPING1_DIO0_MASK & RFLR_DIOMAPPING1_DIO3_MASK ) | RFLR_DIOMAPPING1_DIO0_00 | RFLR_DIOMAPPING1_DIO3_01 );
             }
             Write( REG_LR_FIFORXBASEADDR, 0 );
             Write( REG_LR_FIFOADDRPTR, 0 );

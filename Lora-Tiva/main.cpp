@@ -47,7 +47,7 @@
  * DECLARATION OF INTERNAL VARIABLES
  ******************************************************************/
 
-static volatile AppStates_t State = LOWPOWER;
+static volatile States_t State = IDLE;
 
 static RadioEvents_t RadioEvents;
 
@@ -68,6 +68,12 @@ static uint32_t curr_time_ns;
 // const uint8_t RecvMsg1[] = "                               ";
 
 /******************************************************************
+ * DECLARATION OF EXTERNAL VARIABLES
+ ******************************************************************/
+
+uint8_t lora_board_connected = LORA_BOARD_CONNECTED;
+
+/******************************************************************
  * DECLARATION OF INTERNAL FUNCTIONS
  ******************************************************************/
 
@@ -83,14 +89,14 @@ static uint32_t GetCurrentTimeNs(void);
 
 static uint8_t GetBytePreciseTimeSpi(SPIState_t state);
 
+static void TransmitMessage(uint8_t *msg, uint16_t msg_size, uint16_t delay_ms);
+
 /******************************************************************
  * DEFINITION OF EXTERNAL FUNCTIONS
  ******************************************************************/
 
 int main(void)
 {
-    int led = 0;
-
     //
     // Enable lazy stacking for interrupt handlers.  This allows floating-point
     // instructions to be used within interrupt handlers, but at the expense of
@@ -122,10 +128,21 @@ int main(void)
     //
     // Hello!
     //
-    debug_msg("Hello, LoRa!\n");
+#ifdef DEVICE_MODE_TEST_SPI
+    UARTprintf("SX1276 TIVA SPI Test application \n\n\r");
+#endif
 
+#ifdef DEVICE_MODE_TEST_TRANSMISSION
+    UARTprintf("SX1276 TIVA Transmission Test application \n\n\r");
+#endif
 
-    debug_msg( "\n\n\r     SX1276 TIVA Cage Trap application \n\n\r" );
+#ifdef DEVICE_MODE_BASE
+    UARTprintf("SX1276 TIVA Base Device application \n\n\r");
+#endif
+
+#ifdef DEVICE_MODE_TRACKER
+    UARTprintf("SX1276 TIVA Tracker Device application \n\n\r");
+#endif
 
     // Initialize Radio driver
     RadioEvents.TxDone = OnTxDone;
@@ -143,33 +160,37 @@ int main(void)
     {
 
     	GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_4, 0x00);
-    	SysCtlDelay(SysCtlClockGet() / (2*1000));
+    	DELAY_MS(2);
     	GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_4, 0xFF);
-    	debug_msg( "Radio could not be detected!\n\r" );
-        SysCtlDelay(SysCtlClockGet() / 10 );
+    	UARTprintf( "Radio could not be detected!\n\r" );
+        DELAY_MS(100);
     }
 
-    UARTprintf( "Radio Version: %d!\n\r",radio_version);
-    debug_msg_if( ( DEBUG_MESSAGE & ( Radio.DetectBoardType( ) == SX1276MB1LAS ) ) , "\n\r > Board Type: SX1276MB1LAS < \n\r" );
-    debug_msg_if( ( DEBUG_MESSAGE & ( Radio.DetectBoardType( ) == SX1276MB1MAS ) ) , "\n\r > Board Type: SX1276MB1MAS < \n\r" );
+    UARTprintf("Radio Version: %d!\n\r", radio_version);
+
+    if (Radio.DetectBoardType( ) == SX1276MB1LAS)
+    {
+        UARTprintf("\n\r > Board Type: SX1276MB1LAS < \n\r");
+    }
+    else if (Radio.DetectBoardType( ) == SX1276MB1MAS)
+    {
+        UARTprintf("\n\r > Board Type: SX1276MB1MAS < \n\r");
+    }
 
     Radio.SetChannel( RF_FREQUENCY );
 
     ConfigureSpiPreciseClk();
 
-#ifdef TESTE_SPI
-    uint32_t curr_time_ns;
-
-    while(1)
-    {
-        curr_time_ns = GetCurrentTimeNs();
-    }
-#endif
-
 #if USE_MODEM_LORA == 1
 
-    debug_msg_if( LORA_FHSS_ENABLED, "\n\n\r             > LORA FHSS Mode < \n\n\r");
-    debug_msg_if( !LORA_FHSS_ENABLED, "\n\n\r             > LORA Mode < \n\n\r");
+    if (LORA_FHSS_ENABLED)
+    {
+        UARTprintf("\n\n\r             > LORA FHSS Mode < \n\n\r");
+    }
+    else
+    {
+        UARTprintf("\n\n\r             > LORA Mode < \n\n\r");
+    }
 
     Radio.SetTxConfig( MODEM_LORA, TX_OUTPUT_POWER, 0, LORA_BANDWIDTH,
                       LORA_SPREADING_FACTOR, LORA_CODINGRATE,
@@ -185,7 +206,7 @@ int main(void)
 
 #elif USE_MODEM_FSK == 1
 
-    debug_msg("\n\n\r              > FSK Mode < \n\n\r");
+    UARTprintf("\n\n\r              > FSK Mode < \n\n\r");
     Radio.SetTxConfig( MODEM_FSK, TX_OUTPUT_POWER, FSK_FDEV, 0,
                       FSK_DATARATE, 0,
                       FSK_PREAMBLE_LENGTH, FSK_FIX_LENGTH_PAYLOAD_ON,
@@ -202,24 +223,23 @@ int main(void)
 
 #endif
 
-    debug_msg_if( DEBUG_MESSAGE, "Starting Infinite Loop\r\n" );
-
     GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_4);
     GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_4, 0x00);
-    SysCtlDelay(SysCtlClockGet()/2000);
+    DELAY_MS(1);
     GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_4, 0xFF);
-    SysCtlDelay(SysCtlClockGet()/2000);
+    DELAY_MS(1);
     GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_4, 0x00);
 
-    //
-    // Turn off the BLUE LED.
-    //
-    GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, 0);
+#ifdef DEVICE_MODE_TEST_SPI
+    uint32_t curr_time_ns;
 
-    Radio.Rx( RX_TIMEOUT_VALUE );
+    while(1)
+    {
+        curr_time_ns = GetCurrentTimeNs();
+    }
+#endif
 
-
-#ifdef TESTE_TRANSMITE
+#ifdef DEVICE_MODE_TEST_TRANSMISSION
     char msg_tx[2];
     char msg_id = 0;
 
@@ -230,7 +250,7 @@ int main(void)
         msg_tx[0] = DEVICE_ID;
         msg_tx[1] = msg_id;
 
-        DelayMs(10);
+        DELAY_MS(10);
 
         // debug_msg("ID do device: %i        ID da msg: %i\n", msg_tx[0], msg_id[1]);
 
@@ -238,18 +258,26 @@ int main(void)
 
         blue_led(0);
 
-        DelayMs(1500);
+        DELAY_MS(1500);
 
         msg_id++;
     }
-#else
-    while( 1 )
+#endif
+
+#ifdef DEVICE_MODE_BASE
+    Radio.Rx(RX_TIMEOUT_VALUE);
+
+    while(1)
     {
-        switch( State )
+        switch(State)
         {
-        case RX:
-            if( BufferSize > 0 )
+            case RECEIVED:
             {
+                curr_time_ns = GetCurrentTimeNs();
+
+                UARTprintf("size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\n\r",BufferSize,RssiValue,SnrValue,curr_time_ns,Buffer[0],Buffer[1]);
+                // UARTprintf("Received: %d, Error: %d, Sum: %d \n\r",TimesReceived, TimesError, (TimesReceived+TimesError));
+                
                 // if( strncmp( ( const char* )Buffer, ( const char* )RecvMsg1, 2 ) == 0 )
                 // {
                     // led = !led;
@@ -261,46 +289,137 @@ int main(void)
                 // {
                 //     Radio.Rx( RX_TIMEOUT_VALUE );
                 // }
+                if( BufferSize > 0 )
+                {
+                    Radio.Rx( RX_TIMEOUT_VALUE );
+                }
+                State = IDLE;
+            }
+            break;
+
+            case RECEPTION_TIMEOUT:
+            {
+                Radio.Rx( RX_TIMEOUT_VALUE );
+                State = IDLE;
+            }
+            break;
+
+            case RECEPTION_ERROR:
+            {
+                Radio.Rx( RX_TIMEOUT_VALUE );
+                State = IDLE;
+            }
+            break;
+
+            case TRANSMITTED:
+            {
+                Radio.Rx( RX_TIMEOUT_VALUE );
+                State = IDLE;
+            }    
+            break;
+
+            case TRANSMISSION_TIMEOUT:
+            {
+                Radio.Rx( RX_TIMEOUT_VALUE );
+                State = IDLE;
+            }
+            break;
+
+            case IDLE:
+            default:
+            {
+                
+            }
+            break;
+        }
+    }
+#endif
+
+#ifdef DEVICE_MODE_TRACKER
+    uint8_t sent_messages_number = 0;
+    char msg_tx[2];
+
+    // Set first byte as device id
+    msg_tx[0] = DEVICE_ID;
+
+    // Send first message with sequence number
+    msg_tx[1] = sent_messages_number;
+    TransmitMessage((uint8_t *)msg_tx, sizeof(msg_tx), TX_SEQUENCE_PERIOD_MS);
+    sent_messages_number++;
+
+    while( 1 )
+    {
+        switch( State )
+        {
+            case RECEIVED:
+            {
+                UARTprintf("Message received, size: %d, rss: %d, snr: %d\n\r",BufferSize,RssiValue,SnrValue);
+                // UARTprintf("Received: %d, Error: %d, Sum: %d \n\r",TimesReceived, TimesError, (TimesReceived+TimesError));
 
                 Radio.Rx( RX_TIMEOUT_VALUE );
+                State = IDLE;
             }
-            State = LOWPOWER;
             break;
 
-        case TX:
-            led = !led;
-            blue_led(led);
-
-            debug_msg( "ENVIANDO...\r\n" );
-
-            Radio.Rx( RX_TIMEOUT_VALUE );
-            State = LOWPOWER;
+            case RECEPTION_TIMEOUT:
+            {
+                Radio.Rx( RX_TIMEOUT_VALUE );
+                State = IDLE;
+            }
             break;
 
-        case RX_TIMEOUT:
-            Radio.Rx( RX_TIMEOUT_VALUE );
-            State = LOWPOWER;
+            case RECEPTION_ERROR:
+            {
+                Radio.Rx( RX_TIMEOUT_VALUE );
+                State = IDLE;
+            }
             break;
 
-        case RX_ERROR:
-            // We have received a Packet with a CRC error, blink red led
+            case TRANSMITTED:
+            {
+                UARTprintf("Message correctly sent\n");
+                // If sequence is over
+                if (sent_messages_number == TX_MESSAGES_PER_SEQUENCE)
+                {
+                    UARTprintf("Transmission sequence over\n\n");
 
-            //RED LED
+                    // Wait and then restart transmission
+                    DELAY_MS(TX_SILENCE_PERIOD_MS);
+                    sent_messages_number = 0;
 
-            Radio.Rx( RX_TIMEOUT_VALUE );
-            State = LOWPOWER;
+                    UARTprintf("Restarting sequence\n");
+                }
+
+                // Send message with sequence number
+                msg_tx[1] = sent_messages_number;
+                TransmitMessage((uint8_t *)msg_tx, sizeof(msg_tx), TX_SEQUENCE_PERIOD_MS);
+                sent_messages_number++;
+            }    
             break;
 
-        case TX_TIMEOUT:
-            Radio.Rx( RX_TIMEOUT_VALUE );
-            State = LOWPOWER;
+            case TRANSMISSION_TIMEOUT:
+            {
+                UARTprintf("Message not sent\n");
+
+                DELAY_MS(TX_TIMEOUT_SILENCE_PERIOD_MS);
+                
+                UARTprintf("Restarting sequence\n");
+
+                // Restart sequence transmission
+                sent_messages_number = 0;
+
+                // Send message with sequence number
+                msg_tx[1] = sent_messages_number;
+                TransmitMessage((uint8_t *)msg_tx, sizeof(msg_tx), TX_SEQUENCE_PERIOD_MS);
+                sent_messages_number++;
+            }
             break;
 
-        case LOWPOWER:
-            break;
+            case IDLE:
+            default:
+            {
 
-        default:
-            State = LOWPOWER;
+            }
             break;
         }
     }
@@ -310,48 +429,46 @@ int main(void)
 void OnTxDone(void)
 {
     Radio.Sleep( );
-    State = TX;
-    debug_msg_if( DEBUG_MESSAGE, "> OnTxDone\n\r" );
+    State = TRANSMITTED;
 }
 
 void OnRxDone( uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr)
 {
     Radio.Sleep( );
 
-    curr_time_ns = GetCurrentTimeNs();
-
     BufferSize = size;
-    memcpy( Buffer, payload, BufferSize );
     RssiValue = rssi;
     SnrValue = snr;
-    State = RX;
-    UARTprintf("size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\n\r",size,rssi,snr,curr_time_ns,payload[0],payload[1]);
+
+    memset(Buffer, 0, BufferSize);
+    memcpy(Buffer, payload, BufferSize);
+
     TimesReceived++;
-    // UARTprintf("Received: %d, Error: %d, Sum: %d \n\r",TimesReceived, TimesError, (TimesReceived+TimesError));
+
+    State = RECEIVED;
 }
 
 void OnTxTimeout(void)
 {
-    Radio.Sleep( );
-    State = TX_TIMEOUT;
-    debug_msg_if( DEBUG_MESSAGE, "> OnTxTimeout\n\r" );
+    Radio.Sleep();
+
+    State = TRANSMISSION_TIMEOUT;
 }
 
 void OnRxTimeout(void)
 {
-    Radio.Sleep( );
-    Buffer[ BufferSize-1 ] = 0;
-    State = RX_TIMEOUT;
-    debug_msg_if( DEBUG_MESSAGE, "> OnRxTimeout\n\r" );
+    Radio.Sleep();
+
+    State = RECEPTION_TIMEOUT;
 }
 
 void OnRxError(void)
 {
     Radio.Sleep( );
-    State = RX_ERROR;
-    debug_msg_if( DEBUG_MESSAGE, "> OnRxError\n\r" );
+
     TimesError++;
-    UARTprintf("Received: %d, Error: %d, Sum: %d \n\r",TimesReceived, TimesError, (TimesReceived+TimesError));
+
+    State = RECEPTION_ERROR;
 }
 
 
@@ -391,7 +508,7 @@ static void UIntToString(int number, char * out)
 }
 
 /**
- * Configure the UART and its pins.  This must be called before UARTprintf().
+ * Configure the UART and its pins. This must be called before UARTprintf().
  */
 static void ConfigureUART(void)
 {
@@ -471,8 +588,7 @@ static void ConfigureSpiPreciseClk(void)
     SSIConfigSetExpClk(SSI0_BASE,SysCtlClockGet(),SSI_FRF_MOTO_MODE_0,SSI_MODE_MASTER,1125000,8);
     SSIEnable(SSI0_BASE);
 
-    //wait(0.1);
-    SysCtlDelay(SysCtlClockGet() / 10);
+    DELAY_MS(100);
 }
 
 static uint32_t GetCurrentTimeNs(void)
@@ -506,7 +622,7 @@ static uint8_t GetBytePreciseTimeSpi(SPIState_t state)
     while(SSIBusy(SSI0_BASE));
     SSIDataGet(SSI0_BASE, &dummy);
 
-    DelayMs(1);
+    DELAY_MS(1);
 
     // Get the byte related to the sent state
     SSIDataPut(SSI0_BASE, dummy);
@@ -518,7 +634,25 @@ static uint8_t GetBytePreciseTimeSpi(SPIState_t state)
     // Nss = 1;
     GPIOPinWrite(GPIO_PORTA_BASE, GPIO_PIN_3, GPIO_PIN_3);
 
-    DelayMs(1);
+    DELAY_MS(1);
 
     return r_byte;
+}
+
+static void TransmitMessage(uint8_t *msg, uint16_t msg_size, uint16_t delay_ms)
+{
+    // Send message
+    Radio.Send((uint8_t *)msg, msg_size);
+
+    // Blink blue led
+    blue_led(1);
+    DELAY_MS(BLINK_PERIOD_MS);
+    blue_led(0);
+
+    if ((int16_t)delay_ms - BLINK_PERIOD_MS > 0)
+    {
+        DELAY_MS(delay_ms - BLINK_PERIOD_MS);
+    }
+
+    return;
 }

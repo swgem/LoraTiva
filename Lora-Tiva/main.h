@@ -12,30 +12,43 @@
  * DECLARATION OF MACROS
  ******************************************************************/
 
-#define TESTE_SPI
+/****** DEVICE MODES ******/
 
-#define TESTE_TRANSMITE
+// #define DEVICE_MODE_TEST_SPI
+// #define DEVICE_MODE_TEST_TRANSMISSION
+#define DEVICE_MODE_BASE
+// #define DEVICE_MODE_TRACKER
 
-#define DEVICE_ID               37
+/****** DEFINES FOR TRACKER MODE ******/
 
-#define NS_PER_TICK             125
+#define TX_MESSAGES_PER_SEQUENCE            50
 
-#define DelayMs(timeMs)    SysCtlDelay((SysCtlClockGet() / (1000*6)) * timeMs)
+#define TX_SEQUENCE_PERIOD_MS               50
+#define TX_SILENCE_PERIOD_MS                20000
+#define TX_TIMEOUT_SILENCE_PERIOD_MS        5000
 
-// LORA Macros
+#define NS_PER_TICK                         125
 
-/* Set this flag to '1' to display debug messages on the console */
-#define DEBUG_MESSAGE   1
+/****** GENERAL DEFINES FOR DEVICE ******/
 
-#define debug_msg(X)  UARTprintf(X)
-#define debug_msg_if(D, X)  if(D){UARTprintf(X);}
+#define DEVICE_ID                           25
+#define BLINK_PERIOD_MS                     10
+
+// #define LORA_BOARD_CONNECTED                     SX1276MB1MAS //InAir9
+#define LORA_BOARD_CONNECTED                     SX1276MB1LAS //InAir9B
+
+/****** MACRO FUNCTIONS ******/
+
+#define DELAY_MS(timeMs)    SysCtlDelay((SysCtlClockGet() / (1000*6)) * timeMs)
+
+/****** DEFINES FOR LORA MIDDLEWARE ******/
 
 /* Set this flag to '1' to use the LoRa modulation or to '0' to use FSK modulation */
 #define USE_MODEM_LORA  1
 #define USE_MODEM_FSK   !USE_MODEM_LORA
 
 #define RF_FREQUENCY                                    915000000 // Hz
-#define TX_OUTPUT_POWER                                 20        // 14 dBm
+#define TX_OUTPUT_POWER                                 14        // 14 dBm
 
 #if USE_MODEM_LORA == 1
 
@@ -79,19 +92,13 @@
 
 typedef enum
 {
-    LOWPOWER = 0,
-    IDLE,
-
-    RX,
-    RX_TIMEOUT,
-    RX_ERROR,
-
-    TX,
-    TX_TIMEOUT,
-
-    CAD,
-    CAD_DONE
-} AppStates_t;
+    RECEIVED,
+    RECEPTION_TIMEOUT,
+    RECEPTION_ERROR,
+    TRANSMITTED,
+    TRANSMISSION_TIMEOUT,
+    IDLE
+} States_t;
 
 typedef enum
 {
@@ -100,6 +107,12 @@ typedef enum
     r_ticks_byte2,
     r_ticks_byte3
 } SPIState_t;
+
+/******************************************************************
+ * DECLARATION OF EXTERNAL VARIABLES
+ ******************************************************************/
+
+extern uint8_t lora_board_connected;
 
 /******************************************************************
  * DECLARATION OF EXTERNAL FUNCTIONS

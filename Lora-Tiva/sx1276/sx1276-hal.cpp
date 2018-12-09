@@ -23,6 +23,8 @@ Maintainers: Miguel Luis, Gregory Cristian and Nicolas Huguenin
 #include "driverlib/sysctl.h"
 #include "driverlib/pin_map.h"
 
+extern uint8_t lora_board_connected;
+
 //definicao de pinos
 
 //mosi - SSI2TX - PB7
@@ -56,8 +58,7 @@ SX1276MB1xAS::SX1276MB1xAS( RadioEvents_t *events/*,
 {
     this->RadioEvents = events;
 
-    boardConnected =  SX1276MB1MAS; //InAir9
-    //boardConnected =  SX1276MB1LAS; //InAir9B
+    boardConnected = lora_board_connected;
 
     //liga o clock da porta E (necessário para o reset)
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOE);
