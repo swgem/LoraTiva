@@ -283,22 +283,6 @@ int main(void)
 
                 UARTprintf("size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\n\r",BufferSize,RssiValue,SnrValue,curr_time_ns,Buffer[0],Buffer[1]);
                 // UARTprintf("Received: %d, Error: %d, Sum: %d \n\r",TimesReceived, TimesError, (TimesReceived+TimesError));
-                
-                // if( strncmp( ( const char* )Buffer, ( const char* )RecvMsg1, 2 ) == 0 )
-                // {
-                    // led = !led;
-                    // blue_led(led);
-
-                    // debug_msg( "Recebido: \"OK\"\r\n" );
-                // }
-                // else // valid reception but neither a OK message
-                // {
-                //     Radio.Rx( RX_TIMEOUT_VALUE );
-                // }
-                if( BufferSize > 0 )
-                {
-                    Radio.Rx( RX_TIMEOUT_VALUE );
-                }
                 State = IDLE;
             }
             break;
