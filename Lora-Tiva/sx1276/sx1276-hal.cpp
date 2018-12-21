@@ -161,7 +161,7 @@ void SX1276MB1xAS::SpiInit( void )
 	//mosi - SSI2TX - PB7
 	//miso - SSI2RX - PB6
 	//sclk - SSI2CLK - PB4
-	//nss - PE0
+	//nss - PE1
 
 
 	//nss = 1;
