@@ -29,6 +29,15 @@
 
 #define NS_PER_TICK                         125
 
+#define TX_RCT_TIMEOUT_VALUE_US             100000000
+
+/****** DEFINES FOR BASE MODE ******/
+
+#define RX_RCT_SEQ_TIMEOUT_VALUE_US         2 * TX_SEQUENCE_PERIOD_MS * 1000
+#define RX_RCT_SIL_TIMEOUT_VALUE_US         2 * TX_SILENCE_PERIOD_MS * 1000
+
+#define RX_MAX_RCT_TIMEOUT_COUNT            3
+
 /****** GENERAL DEFINES FOR DEVICE ******/
 
 #define DEVICE_ID                           25
@@ -83,7 +92,6 @@
     #error "Please define a modem in the compiler options."
 #endif
 
-#define RX_TIMEOUT_VALUE                                100000000   // in us
 #define BUFFER_SIZE                                     32          // Define the payload size here
 
 /******************************************************************

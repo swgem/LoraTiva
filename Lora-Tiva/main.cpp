@@ -271,7 +271,10 @@ int main(void)
 #endif
 
 #ifdef DEVICE_MODE_BASE
-    Radio.Rx(RX_TIMEOUT_VALUE);
+    uint8_t reception_timeout_count = 0;
+
+    // Enter reception mode
+    Radio.Rx(RX_RCT_SIL_TIMEOUT_VALUE_US);
 
     while(1)
     {
@@ -283,34 +286,48 @@ int main(void)
 
                 UARTprintf("size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\n\r",BufferSize,RssiValue,SnrValue,curr_time_ns,Buffer[0],Buffer[1]);
                 // UARTprintf("Received: %d, Error: %d, Sum: %d \n\r",TimesReceived, TimesError, (TimesReceived+TimesError));
+
+                Radio.Rx(RX_RCT_SEQ_TIMEOUT_VALUE_US);
+
                 State = IDLE;
             }
             break;
 
             case RECEPTION_TIMEOUT:
             {
-                Radio.Rx( RX_TIMEOUT_VALUE );
+                reception_timeout_count++;
+
+                if (reception_timeout_count == RX_MAX_RCT_TIMEOUT_COUNT)
+                {
+                    reception_timeout_count = 0;
+                    Radio.Rx(RX_RCT_SIL_TIMEOUT_VALUE_US);
+                }
+                else
+                {
+                    Radio.Rx(RX_RCT_SEQ_TIMEOUT_VALUE_US);
+                }
+                
                 State = IDLE;
             }
             break;
 
             case RECEPTION_ERROR:
             {
-                Radio.Rx( RX_TIMEOUT_VALUE );
+                Radio.Rx(100000000);
                 State = IDLE;
             }
             break;
 
             case TRANSMITTED:
             {
-                Radio.Rx( RX_TIMEOUT_VALUE );
+                Radio.Rx(100000000);
                 State = IDLE;
             }    
             break;
 
             case TRANSMISSION_TIMEOUT:
             {
-                Radio.Rx( RX_TIMEOUT_VALUE );
+                Radio.Rx(100000000);
                 State = IDLE;
             }
             break;
@@ -346,21 +363,21 @@ int main(void)
                 UARTprintf("Message received, size: %d, rss: %d, snr: %d\n\r",BufferSize,RssiValue,SnrValue);
                 // UARTprintf("Received: %d, Error: %d, Sum: %d \n\r",TimesReceived, TimesError, (TimesReceived+TimesError));
 
-                Radio.Rx( RX_TIMEOUT_VALUE );
+                Radio.Rx(TX_RCT_TIMEOUT_VALUE_US);
                 State = IDLE;
             }
             break;
 
             case RECEPTION_TIMEOUT:
             {
-                Radio.Rx( RX_TIMEOUT_VALUE );
+                Radio.Rx(TX_RCT_TIMEOUT_VALUE_US);
                 State = IDLE;
             }
             break;
 
             case RECEPTION_ERROR:
             {
-                Radio.Rx( RX_TIMEOUT_VALUE );
+                Radio.Rx(TX_RCT_TIMEOUT_VALUE_US);
                 State = IDLE;
             }
             break;
@@ -418,7 +435,7 @@ int main(void)
 
 void OnTxDone(void)
 {
-    Radio.Sleep( );
+    Radio.Sleep();
     State = TRANSMITTED;
 }
 
