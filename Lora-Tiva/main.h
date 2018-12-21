@@ -34,8 +34,8 @@
 #define DEVICE_ID                           25
 #define BLINK_PERIOD_MS                     10
 
-// #define LORA_BOARD_CONNECTED                     SX1276MB1MAS //InAir9
-#define LORA_BOARD_CONNECTED                     SX1276MB1LAS //InAir9B
+#define LORA_BOARD_MAS_INAIR9
+// #define LORA_BOARD_LAS_INAIR9B
 
 /****** MACRO FUNCTIONS ******/
 

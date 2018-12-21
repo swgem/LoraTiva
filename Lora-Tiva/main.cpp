@@ -71,7 +71,13 @@ static uint32_t curr_time_ns;
  * DECLARATION OF EXTERNAL VARIABLES
  ******************************************************************/
 
-uint8_t lora_board_connected = LORA_BOARD_CONNECTED;
+#if defined(LORA_BOARD_MAS_INAIR9)
+    uint8_t lora_board_connected = SX1276MB1MAS;
+#elif defined(LORA_BOARD_LAS_INAIR9B)
+    uint8_t lora_board_connected = SX1276MB1LAS;
+#else
+    #error "Please define a valid lora board."
+#endif
 
 /******************************************************************
  * DECLARATION OF INTERNAL FUNCTIONS
