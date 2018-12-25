@@ -97,6 +97,8 @@ static uint8_t GetBytePreciseTimeSpi(SPIState_t state);
 
 static void TransmitMessage(uint8_t *msg, uint16_t msg_size, uint16_t delay_ms);
 
+static void SetWordBuffer(int32_t *buffer, int32_t value, uint32_t size);
+
 /******************************************************************
  * DEFINITION OF EXTERNAL FUNCTIONS
  ******************************************************************/
@@ -272,6 +274,13 @@ int main(void)
 
 #ifdef DEVICE_MODE_BASE
     uint8_t reception_timeout_count = 0;
+    uint8_t timestamp_index = 0;
+    int32_t timestamp_buffer[RX_TIMESTAMP_BUFFER_SIZE];
+
+    // Clear timestamp buffer
+    SetWordBuffer(timestamp_buffer,
+                  -1,
+                  sizeof(timestamp_buffer) / sizeof(timestamp_buffer[0]));
 
     // Enter reception mode
     Radio.Rx(RX_RCT_SIL_TIMEOUT_VALUE_US);
@@ -283,6 +292,10 @@ int main(void)
             case RECEIVED:
             {
                 curr_time_ns = GetCurrentTimeNs();
+
+                // Insert timestamp in buffer
+                timestamp_buffer[timestamp_index] = curr_time_ns;
+                timestamp_index++;
 
                 UARTprintf("size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\n\r",BufferSize,RssiValue,SnrValue,curr_time_ns,Buffer[0],Buffer[1]);
                 // UARTprintf("Received: %d, Error: %d, Sum: %d \n\r",TimesReceived, TimesError, (TimesReceived+TimesError));
@@ -301,6 +314,14 @@ int main(void)
                 {
                     reception_timeout_count = 0;
                     Radio.Rx(RX_RCT_SIL_TIMEOUT_VALUE_US);
+
+                    UARTprintf("Sequence reception over\r\n");
+
+                    // Reset buffer state
+                    SetWordBuffer(timestamp_buffer,
+                                  -1,
+                                  sizeof(timestamp_buffer) / sizeof(timestamp_buffer[0]));
+                    timestamp_index = 0;
                 }
                 else
                 {
@@ -660,6 +681,16 @@ static void TransmitMessage(uint8_t *msg, uint16_t msg_size, uint16_t delay_ms)
     {
         DELAY_MS(delay_ms - BLINK_PERIOD_MS);
     }
+
+    return;
+}
+
+static void SetWordBuffer(int32_t *buffer, int32_t value, uint32_t size)
+{
+    do
+    {
+        buffer[--size] = value;
+    } while (size);
 
     return;
 }

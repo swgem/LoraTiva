@@ -38,6 +38,8 @@
 
 #define RX_MAX_RCT_TIMEOUT_COUNT            3
 
+#define RX_TIMESTAMP_BUFFER_SIZE            TX_MESSAGES_PER_SEQUENCE
+
 /****** GENERAL DEFINES FOR DEVICE ******/
 
 #define DEVICE_ID                           25
