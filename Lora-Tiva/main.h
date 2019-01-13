@@ -118,6 +118,23 @@ typedef enum
     r_ticks_byte3
 } SPIState_t;
 
+typedef enum
+{
+    RX_WAITING_TRACKER_SEQ = 0,
+    RX_RECEIVING_TRACKER_SEQ,
+
+#if (DEVICE_ID == 0 || DEVICE_ID == 2)
+    RX_WAITING_BASE1_SEQ,
+    RX_RECEIVING_BASE1_SEQ,
+#endif
+
+#if (DEVICE_ID == 0)
+    RX_WAITING_BASE2_SEQ,
+    RX_RECEIVING_BASE2_SEQ,
+#endif
+
+} RXReceptionState_t;
+
 /******************************************************************
  * DECLARATION OF EXTERNAL VARIABLES
  ******************************************************************/

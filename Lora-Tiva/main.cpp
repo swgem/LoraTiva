@@ -67,6 +67,18 @@ static uint32_t curr_time_ns;
 // const uint8_t SendMsg1[] = "                               ";
 // const uint8_t RecvMsg1[] = "                               ";
 
+#ifdef DEVICE_MODE_BASE
+static RXReceptionState_t reception_state = RX_WAITING_TRACKER_SEQ;
+static uint8_t timestamp_index = 0;
+static int32_t timestamp_buffer[RX_TIMESTAMP_BUFFER_SIZE];
+
+    #if (DEVICE_ID == 0)
+static int32_t timestamp_buffer_base1[RX_TIMESTAMP_BUFFER_SIZE];
+static int32_t timestamp_buffer_base2[RX_TIMESTAMP_BUFFER_SIZE];
+    #endif
+
+#endif
+
 /******************************************************************
  * DECLARATION OF EXTERNAL VARIABLES
  ******************************************************************/
@@ -98,6 +110,10 @@ static uint8_t GetBytePreciseTimeSpi(SPIState_t state);
 static void TransmitMessage(uint8_t *msg, uint16_t msg_size, uint16_t delay_ms);
 
 static void SetWordBuffer(int32_t *buffer, int32_t value, uint32_t size);
+
+#if (DEVICE_ID == 0)
+static void StateMachineReceptionDevice0(void);
+#endif
 
 /******************************************************************
  * DEFINITION OF EXTERNAL FUNCTIONS
@@ -274,13 +290,19 @@ int main(void)
 
 #ifdef DEVICE_MODE_BASE
     uint8_t reception_timeout_count = 0;
-    uint8_t timestamp_index = 0;
-    int32_t timestamp_buffer[RX_TIMESTAMP_BUFFER_SIZE];
 
     // Clear timestamp buffer
     SetWordBuffer(timestamp_buffer,
                   -1,
                   sizeof(timestamp_buffer) / sizeof(timestamp_buffer[0]));
+#if (DEVICE_ID == 0)
+    SetWordBuffer(timestamp_buffer_base1,
+                  -1,
+                  sizeof(timestamp_buffer) / sizeof(timestamp_buffer[0]));
+    SetWordBuffer(timestamp_buffer_base2,
+                  -1,
+                  sizeof(timestamp_buffer) / sizeof(timestamp_buffer[0]));
+#endif
 
     // Enter reception mode
     Radio.Rx(RX_RCT_SIL_TIMEOUT_VALUE_US);
@@ -291,18 +313,9 @@ int main(void)
         {
             case RECEIVED:
             {
-                curr_time_ns = GetCurrentTimeNs();
-
-                // Insert timestamp in buffer
-                timestamp_buffer[timestamp_index] = curr_time_ns;
-                timestamp_index++;
-
-                UARTprintf("size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\n\r",BufferSize,RssiValue,SnrValue,curr_time_ns,Buffer[0],Buffer[1]);
-                // UARTprintf("Received: %d, Error: %d, Sum: %d \n\r",TimesReceived, TimesError, (TimesReceived+TimesError));
-
-                Radio.Rx(RX_RCT_SEQ_TIMEOUT_VALUE_US);
-
-                State = IDLE;
+#if (DEVICE_ID == 0)
+                StateMachineReceptionDevice0();
+#endif
             }
             break;
 
@@ -313,7 +326,6 @@ int main(void)
                 if (reception_timeout_count == RX_MAX_RCT_TIMEOUT_COUNT)
                 {
                     reception_timeout_count = 0;
-                    Radio.Rx(RX_RCT_SIL_TIMEOUT_VALUE_US);
 
                     UARTprintf("Sequence reception over\r\n");
 
@@ -321,7 +333,44 @@ int main(void)
                     SetWordBuffer(timestamp_buffer,
                                   -1,
                                   sizeof(timestamp_buffer) / sizeof(timestamp_buffer[0]));
+#if (DEVICE_ID == 0)
+                    SetWordBuffer(timestamp_buffer_base1,
+                                  -1,
+                                  sizeof(timestamp_buffer) / sizeof(timestamp_buffer[0]));
+                    SetWordBuffer(timestamp_buffer_base2,
+                                  -1,
+                                  sizeof(timestamp_buffer) / sizeof(timestamp_buffer[0]));
+#endif
+
                     timestamp_index = 0;
+
+                    // Set next state for reception/transmission
+                    if (reception_state == RX_RECEIVING_TRACKER_SEQ)
+                    {
+#if (DEVICE_ID == 0 || DEVICE_ID == 2)
+                        reception_state = RX_WAITING_BASE1_SEQ;
+#elif (DEVICE_ID == 1)
+
+#endif
+                    }
+#if (DEVICE_ID == 0 || DEVICE_ID == 2)
+                    else if (reception_state == RX_RECEIVING_BASE1_SEQ)
+                    {
+    #if (DEVICE_ID == 0)
+                        reception_state = RX_WAITING_BASE2_SEQ;
+    #else
+
+    #endif
+                    }
+#endif
+#if (DEVICE_ID == 0)
+                    else if (reception_state == RX_RECEIVING_BASE2_SEQ)
+                    {
+                        reception_state = RX_WAITING_TRACKER_SEQ;
+                    }
+#endif
+
+                    Radio.Rx(RX_RCT_SIL_TIMEOUT_VALUE_US);
                 }
                 else
                 {
@@ -694,3 +743,78 @@ static void SetWordBuffer(int32_t *buffer, int32_t value, uint32_t size)
 
     return;
 }
+
+#if (DEVICE_ID == 0)
+static void StateMachineReceptionDevice0(void)
+{
+    switch (reception_state)
+    {
+        case RX_WAITING_TRACKER_SEQ:
+            reception_state = RX_RECEIVING_TRACKER_SEQ;
+            UARTprintf("Receiving tracker sequence\n\r");
+        case RX_RECEIVING_TRACKER_SEQ:
+        {
+            curr_time_ns = GetCurrentTimeNs();
+
+            // Insert timestamp in buffer
+            timestamp_buffer[timestamp_index] = curr_time_ns;
+            timestamp_index++;
+
+            UARTprintf("size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\n\r",BufferSize,RssiValue,SnrValue,curr_time_ns,Buffer[0],Buffer[1]);
+            // UARTprintf("Received: %d, Error: %d, Sum: %d \n\r",TimesReceived, TimesError, (TimesReceived+TimesError));
+
+            Radio.Rx(RX_RCT_SEQ_TIMEOUT_VALUE_US);
+
+            State = IDLE;
+        }
+        break;
+
+        case RX_WAITING_BASE1_SEQ:
+            reception_state = RX_RECEIVING_BASE1_SEQ;
+            UARTprintf("Receiving base 1 sequence\n\r");
+        case RX_RECEIVING_BASE1_SEQ:
+        {
+            curr_time_ns = GetCurrentTimeNs();
+
+            // Insert timestamp in buffer
+            timestamp_buffer_base1[timestamp_index] = curr_time_ns;
+            timestamp_index++;
+
+            UARTprintf("size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\n\r",BufferSize,RssiValue,SnrValue,curr_time_ns,Buffer[0],Buffer[1]);
+            // UARTprintf("Received: %d, Error: %d, Sum: %d \n\r",TimesReceived, TimesError, (TimesReceived+TimesError));
+
+            Radio.Rx(RX_RCT_SEQ_TIMEOUT_VALUE_US);
+
+            State = IDLE;
+        }
+        break;
+
+        case RX_WAITING_BASE2_SEQ:
+            reception_state = RX_RECEIVING_BASE2_SEQ;
+            UARTprintf("Receiving base 2 sequence\n\r");
+        case RX_RECEIVING_BASE2_SEQ:
+        {
+            curr_time_ns = GetCurrentTimeNs();
+
+            // Insert timestamp in buffer
+            timestamp_buffer_base2[timestamp_index] = curr_time_ns;
+            timestamp_index++;
+
+            UARTprintf("size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\n\r",BufferSize,RssiValue,SnrValue,curr_time_ns,Buffer[0],Buffer[1]);
+            // UARTprintf("Received: %d, Error: %d, Sum: %d \n\r",TimesReceived, TimesError, (TimesReceived+TimesError));
+
+            Radio.Rx(RX_RCT_SEQ_TIMEOUT_VALUE_US);
+
+            State = IDLE;
+        }
+        break;
+
+        default:
+        {
+
+        }
+        break;
+    }
+}
+#endif
+
