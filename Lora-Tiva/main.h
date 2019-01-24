@@ -23,8 +23,8 @@
 
 #define TX_MESSAGES_PER_SEQUENCE            50
 
-#define TX_SEQUENCE_PERIOD_MS               50
-#define TX_SILENCE_PERIOD_MS                20000
+#define TX_SEQUENCE_PERIOD_MS               200
+#define TX_SILENCE_PERIOD_MS                30000
 #define TX_TIMEOUT_SILENCE_PERIOD_MS        5000
 
 #define NS_PER_TICK                         125
@@ -42,7 +42,7 @@
 
 /****** GENERAL DEFINES FOR DEVICE ******/
 
-#define DEVICE_ID                           25
+#define DEVICE_ID                           2
 #define BLINK_PERIOD_MS                     10
 
 #define LORA_BOARD_MAS_INAIR9
@@ -102,7 +102,7 @@
 
 typedef enum
 {
-    RECEIVED,
+    RECEIVED = 0,
     RECEPTION_TIMEOUT,
     RECEPTION_ERROR,
     TRANSMITTED,
@@ -120,20 +120,40 @@ typedef enum
 
 typedef enum
 {
-    RX_WAITING_TRACKER_SEQ = 0,
-    RX_RECEIVING_TRACKER_SEQ,
+    BASE_WAITING_TRACKER_SEQ = 0,
+    BASE_RECEIVING_TRACKER_SEQ,
 
 #if (DEVICE_ID == 0 || DEVICE_ID == 2)
-    RX_WAITING_BASE1_SEQ,
-    RX_RECEIVING_BASE1_SEQ,
+    BASE_WAITING_BASE1_SEQ,
+    BASE_RECEIVING_BASE1_SEQ,
 #endif
 
-#if (DEVICE_ID == 0)
-    RX_WAITING_BASE2_SEQ,
-    RX_RECEIVING_BASE2_SEQ,
+#if (DEVICE_ID == 0 || DEVICE_ID == 1)
+    BASE_WAITING_BASE2_SEQ,
+    BASE_RECEIVING_BASE2_SEQ,
 #endif
 
-} RXReceptionState_t;
+#if (DEVICE_ID == 1 || DEVICE_ID == 2)
+    BASE_TRANSMITTING,
+#endif
+
+} BaseState_t;
+
+typedef enum
+{
+    TIMEOUT = 0,               // Timeout or sequence over
+    MESSAGE_RECEIVED,          // Received a message
+#if (DEVICE_ID == 1 || DEVICE_ID == 2)
+    MESSAGE_TRANSMITTED        // Transmitted a message
+#endif
+} BaseEvent_t;
+
+typedef struct
+{
+    uint8_t device_id;
+    uint8_t message_id;
+    int32_t timestamp;
+} TimestampMessage_t;
 
 /******************************************************************
  * DECLARATION OF EXTERNAL VARIABLES
@@ -154,6 +174,5 @@ void OnTxTimeout(void);
 void OnRxTimeout(void);
 
 void OnRxError(void);
-
 
 #endif /* MAIN_H_ */
