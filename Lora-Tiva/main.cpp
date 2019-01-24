@@ -391,14 +391,14 @@ int main(void)
 
 #ifdef DEVICE_MODE_TRACKER
     uint8_t sent_messages_number = 0;
-    char msg_tx[2];
+    TimestampMessage_t msg_tx;
 
     // Set first byte as device id
-    msg_tx[0] = DEVICE_ID;
+    msg_tx.device_id = DEVICE_ID;
 
     // Send first message with sequence number
-    msg_tx[1] = sent_messages_number;
-    TransmitMessage((uint8_t *)msg_tx, sizeof(msg_tx), TX_SEQUENCE_PERIOD_MS);
+    msg_tx.message_id = sent_messages_number;
+    TransmitMessage((uint8_t *)&msg_tx, sizeof(msg_tx), TX_SEQUENCE_PERIOD_MS);
     sent_messages_number++;
 
     while( 1 )
@@ -445,8 +445,8 @@ int main(void)
                 }
 
                 // Send message with sequence number
-                msg_tx[1] = sent_messages_number;
-                TransmitMessage((uint8_t *)msg_tx, sizeof(msg_tx), TX_SEQUENCE_PERIOD_MS);
+                msg_tx.message_id = sent_messages_number;
+                TransmitMessage((uint8_t *)&msg_tx, sizeof(msg_tx), TX_SEQUENCE_PERIOD_MS);
                 sent_messages_number++;
             }    
             break;
@@ -463,8 +463,8 @@ int main(void)
                 sent_messages_number = 0;
 
                 // Send message with sequence number
-                msg_tx[1] = sent_messages_number;
-                TransmitMessage((uint8_t *)msg_tx, sizeof(msg_tx), TX_SEQUENCE_PERIOD_MS);
+                msg_tx.message_id = sent_messages_number;
+                TransmitMessage((uint8_t *)&msg_tx, sizeof(msg_tx), TX_SEQUENCE_PERIOD_MS);
                 sent_messages_number++;
             }
             break;
