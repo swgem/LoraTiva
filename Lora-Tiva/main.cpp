@@ -710,7 +710,6 @@ static void SetWordBuffer(int32_t *buffer, int32_t value, uint32_t size)
 static void StateMachineDevice0(BaseEvent_t event)
 {
     TimestampMessage_t *msg = (TimestampMessage_t *)Buffer;
-    static uint16_t timestamp_index = 0;
     static uint16_t wrong_reception_count = 0;
 
     switch (base_state)
@@ -731,8 +730,6 @@ static void StateMachineDevice0(BaseEvent_t event)
                                   sizeof(timestamp_buffer_base2) / sizeof(timestamp_buffer_base2[0]));
 
                     UARTprintf("Receiving tracker sequence\n\r");
-
-                    timestamp_index = 0;
 
                     base_state = BASE_RECEIVING_TRACKER_SEQ;
                 }
@@ -759,8 +756,7 @@ static void StateMachineDevice0(BaseEvent_t event)
                     curr_time_ns = GetCurrentTimeNs();
 
                     // Insert timestamp in buffer
-                    timestamp_buffer[timestamp_index] = curr_time_ns;
-                    timestamp_index++;
+                    timestamp_buffer[msg->message_id] = curr_time_ns;
 
                     UARTprintf("size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\n\r",BufferSize,RssiValue,SnrValue,curr_time_ns,Buffer[0],Buffer[1]);
                     // UARTprintf("Received: %d, Error: %d, Sum: %d \n\r",TimesReceived, TimesError, (TimesReceived+TimesError));
@@ -800,8 +796,6 @@ static void StateMachineDevice0(BaseEvent_t event)
                 {
                     UARTprintf("Receiving base 1 sequence\n\r");
 
-                    timestamp_index = 0;
-
                     base_state = BASE_RECEIVING_BASE1_SEQ;
                 }
                 else
@@ -838,8 +832,7 @@ static void StateMachineDevice0(BaseEvent_t event)
                 if (msg->device_id == 1)
                 {
                     // Insert timestamp in buffer
-                    timestamp_buffer_base1[timestamp_index] = msg->timestamp;
-                    timestamp_index++;
+                    timestamp_buffer_base1[msg->message_id] = msg->timestamp;
 
                     UARTprintf("size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d\r\n",BufferSize,RssiValue,SnrValue,msg->timestamp,msg->device_id);
                     // UARTprintf("Received: %d, Error: %d, Sum: %d \n\r",TimesReceived, TimesError, (TimesReceived+TimesError));
@@ -879,8 +872,6 @@ static void StateMachineDevice0(BaseEvent_t event)
                 {
                     UARTprintf("Receiving base 2 sequence\n\r");
 
-                    timestamp_index = 0;
-
                     base_state = BASE_RECEIVING_BASE2_SEQ;
                 }
                 else
@@ -917,8 +908,7 @@ static void StateMachineDevice0(BaseEvent_t event)
                 if (msg->device_id == 2)
                 {
                     // Insert timestamp in buffer
-                    timestamp_buffer_base2[timestamp_index] = msg->timestamp;
-                    timestamp_index++;
+                    timestamp_buffer_base2[msg->message_id] = msg->timestamp;
 
                     UARTprintf("size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d\r\n",BufferSize,RssiValue,SnrValue,msg->timestamp,msg->device_id);
                     // UARTprintf("Received: %d, Error: %d, Sum: %d \n\r",TimesReceived, TimesError, (TimesReceived+TimesError));
@@ -987,8 +977,6 @@ static void StateMachineDevice1(BaseEvent_t event)
 
                     UARTprintf("Receiving tracker sequence\n\r");
 
-                    timestamp_index = 0;
-
                     base_state = BASE_RECEIVING_TRACKER_SEQ;
                 }
                 // If message is coming from a base
@@ -1013,8 +1001,7 @@ static void StateMachineDevice1(BaseEvent_t event)
                     curr_time_ns = GetCurrentTimeNs();
 
                     // Insert timestamp in buffer
-                    timestamp_buffer[timestamp_index] = curr_time_ns;
-                    timestamp_index++;
+                    timestamp_buffer[msg->message_id] = curr_time_ns;
 
                     UARTprintf("size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\n\r",BufferSize,RssiValue,SnrValue,curr_time_ns,Buffer[0],Buffer[1]);
                     // UARTprintf("Received: %d, Error: %d, Sum: %d \n\r",TimesReceived, TimesError, (TimesReceived+TimesError));
@@ -1029,6 +1016,7 @@ static void StateMachineDevice1(BaseEvent_t event)
                         // Start transmitting
                         timestamp_index = 0;
                         msg_tx.device_id = DEVICE_ID;
+                        msg_tx.message_id = timestamp_index;
                         msg_tx.timestamp = timestamp_buffer[timestamp_index];
                         timestamp_index++;
                         UARTprintf("timestamp: %d, msg_id: %d\n\r",msg_tx.timestamp,msg_tx.message_id);
@@ -1058,6 +1046,7 @@ static void StateMachineDevice1(BaseEvent_t event)
                 // Start transmitting
                 timestamp_index = 0;
                 msg_tx.device_id = DEVICE_ID;
+                msg_tx.message_id = timestamp_index;
                 msg_tx.timestamp = timestamp_buffer[timestamp_index];
                 timestamp_index++;
                 UARTprintf("timestamp: %d, msg_id: %d\n\r",msg_tx.timestamp,msg_tx.message_id);
@@ -1075,6 +1064,7 @@ static void StateMachineDevice1(BaseEvent_t event)
                 if (timestamp_index < RX_TIMESTAMP_BUFFER_SIZE)
                 {
                     msg_tx.device_id = DEVICE_ID;
+                    msg_tx.message_id = timestamp_index;
                     msg_tx.timestamp = timestamp_buffer[timestamp_index];
                     timestamp_index++;
                     UARTprintf("timestamp: %d, msg_id: %d\n\r",msg_tx.timestamp,msg_tx.message_id);
@@ -1101,8 +1091,6 @@ static void StateMachineDevice1(BaseEvent_t event)
                 if (msg->device_id == 2)
                 {
                     UARTprintf("Receiving base 2 sequence\n\r");
-
-                    timestamp_index = 0;
 
                     base_state = BASE_RECEIVING_BASE2_SEQ;
 
@@ -1203,8 +1191,6 @@ static void StateMachineDevice2(BaseEvent_t event)
 
                     UARTprintf("Receiving tracker sequence\n\r");
 
-                    timestamp_index = 0;
-
                     base_state = BASE_RECEIVING_TRACKER_SEQ;
                 }
                 // If message is coming from a base
@@ -1224,8 +1210,7 @@ static void StateMachineDevice2(BaseEvent_t event)
                     curr_time_ns = GetCurrentTimeNs();
 
                     // Insert timestamp in buffer
-                    timestamp_buffer[timestamp_index] = curr_time_ns;
-                    timestamp_index++;
+                    timestamp_buffer[msg->message_id] = curr_time_ns;
 
                     UARTprintf("size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\n\r",BufferSize,RssiValue,SnrValue,curr_time_ns,Buffer[0],Buffer[1]);
                     // UARTprintf("Received: %d, Error: %d, Sum: %d \n\r",TimesReceived, TimesError, (TimesReceived+TimesError));
@@ -1268,8 +1253,6 @@ static void StateMachineDevice2(BaseEvent_t event)
                     UARTprintf("Receiving base 1 sequence\n\r");
 
                     base_state = BASE_RECEIVING_BASE1_SEQ;
-
-                    timestamp_index = 0;
 
                     Radio.Rx(RX_RCT_SEQ_TIMEOUT_VALUE_US);
                 }
@@ -1316,6 +1299,7 @@ static void StateMachineDevice2(BaseEvent_t event)
 
                         timestamp_index = 0;
                         msg_tx.device_id = DEVICE_ID;
+                        msg_tx.message_id = timestamp_index;
                         msg_tx.timestamp = timestamp_buffer[timestamp_index];
 
                         UARTprintf("timestamp: %d, msg_id: %d\n\r",msg_tx.timestamp,msg_tx.message_id);
@@ -1346,6 +1330,7 @@ static void StateMachineDevice2(BaseEvent_t event)
                 // Start transmitting
                 timestamp_index = 0;
                 msg_tx.device_id = DEVICE_ID;
+                msg_tx.message_id = timestamp_index;
                 msg_tx.timestamp = timestamp_buffer[timestamp_index];
 
                 UARTprintf("timestamp: %d, msg_id: %d\n\r",msg_tx.timestamp,msg_tx.message_id);
@@ -1365,6 +1350,7 @@ static void StateMachineDevice2(BaseEvent_t event)
                 if (timestamp_index < RX_TIMESTAMP_BUFFER_SIZE)
                 {
                     msg_tx.device_id = DEVICE_ID;
+                    msg_tx.message_id = timestamp_index;
                     msg_tx.timestamp = timestamp_buffer[timestamp_index];
                     timestamp_index++;
 
