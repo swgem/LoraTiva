@@ -45,8 +45,13 @@
 #define DEVICE_ID                           2
 #define BLINK_PERIOD_MS                     10
 
+// For this specific project, this is the configuration
+#if (DEVICE_ID >= 2)
+#define LORA_BOARD_LAS_INAIR9B
+#else
 #define LORA_BOARD_MAS_INAIR9
-// #define LORA_BOARD_LAS_INAIR9B
+#endif
+
 
 /****** MACRO FUNCTIONS ******/
 
