@@ -834,7 +834,7 @@ static void StateMachineDevice0(BaseEvent_t event)
                     // Insert timestamp in buffer
                     timestamp_buffer_base1[msg->message_id] = msg->timestamp;
 
-                    UARTprintf("size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d\r\n",BufferSize,RssiValue,SnrValue,msg->timestamp,msg->device_id);
+                    UARTprintf("size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\r\n",BufferSize,RssiValue,SnrValue,msg->timestamp,msg->device_id,msg->message_id);
                     // UARTprintf("Received: %d, Error: %d, Sum: %d \n\r",TimesReceived, TimesError, (TimesReceived+TimesError));
 
                     if (msg->message_id == RX_LAST_MESSAGE_ID)
@@ -910,7 +910,7 @@ static void StateMachineDevice0(BaseEvent_t event)
                     // Insert timestamp in buffer
                     timestamp_buffer_base2[msg->message_id] = msg->timestamp;
 
-                    UARTprintf("size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d\r\n",BufferSize,RssiValue,SnrValue,msg->timestamp,msg->device_id);
+                    UARTprintf("size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\r\n",BufferSize,RssiValue,SnrValue,msg->timestamp,msg->device_id,msg->message_id);
                     // UARTprintf("Received: %d, Error: %d, Sum: %d \n\r",TimesReceived, TimesError, (TimesReceived+TimesError));
 
                     if (msg->message_id == RX_LAST_MESSAGE_ID)
