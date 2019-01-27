@@ -800,6 +800,8 @@ static void StateMachineDevice0(BaseEvent_t event)
                 {
                     UARTprintf("Receiving base 1 sequence\n\r");
 
+                    timestamp_index = 0;
+
                     base_state = BASE_RECEIVING_BASE1_SEQ;
                 }
                 // If message is coming from another source
@@ -861,6 +863,8 @@ static void StateMachineDevice0(BaseEvent_t event)
                 if (msg->device_id == 2)
                 {
                     UARTprintf("Receiving base 2 sequence\n\r");
+
+                    timestamp_index = 0;
 
                     base_state = BASE_RECEIVING_BASE2_SEQ;
                 }
@@ -1046,6 +1050,8 @@ static void StateMachineDevice1(BaseEvent_t event)
                 {
                     UARTprintf("Receiving base 2 sequence\n\r");
 
+                    timestamp_index = 0;
+
                     base_state = BASE_RECEIVING_BASE2_SEQ;
 
                     Radio.Rx(RX_RCT_SEQ_TIMEOUT_VALUE_US);
@@ -1178,6 +1184,8 @@ static void StateMachineDevice2(BaseEvent_t event)
                     UARTprintf("Receiving base 1 sequence\n\r");
 
                     base_state = BASE_RECEIVING_BASE1_SEQ;
+
+                    timestamp_index = 0;
 
                     Radio.Rx(RX_RCT_SEQ_TIMEOUT_VALUE_US);
                 }
