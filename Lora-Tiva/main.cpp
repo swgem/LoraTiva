@@ -349,9 +349,9 @@ int main(void)
                 else
                 {
                     Radio.Rx(RX_RCT_SEQ_TIMEOUT_VALUE_US);
+
+                    State = IDLE;
                 }
-                
-                State = IDLE;
             }
             break;
 
@@ -726,6 +726,7 @@ static void StateMachineDevice0(BaseEvent_t event)
 {
     TimestampMessage_t *msg = (TimestampMessage_t *)Buffer;
     static uint16_t timestamp_index = 0;
+    static uint16_t timeout_count = 0;
 
     switch (base_state)
     {
@@ -755,8 +756,15 @@ static void StateMachineDevice0(BaseEvent_t event)
                 // If message is coming from a base
                 else
                 {
+                    Radio.Rx(RX_RCT_SIL_TIMEOUT_VALUE_US);
                     break;
                 }
+            }
+            else if (event == TIMEOUT)
+            {
+                UARTprintf("Timeout waiting tracker\r\n\r\n");
+                Radio.Rx(RX_RCT_SIL_TIMEOUT_VALUE_US);
+                break;
             }
         case BASE_RECEIVING_TRACKER_SEQ:
         {
@@ -775,6 +783,10 @@ static void StateMachineDevice0(BaseEvent_t event)
             }
             else if (event == TIMEOUT)
             {
+                UARTprintf("Tracker sequence reception over\r\n\r\n");
+
+                Radio.Rx(RX_RCT_SIL_TIMEOUT_VALUE_US);
+
                 base_state = BASE_WAITING_BASE1_SEQ;
             }
         }
@@ -784,7 +796,7 @@ static void StateMachineDevice0(BaseEvent_t event)
             if (event == MESSAGE_RECEIVED)
             {
                 // If message is coming from base 1
-                if (msg->device_id >= 3)
+                if (msg->device_id == 1)
                 {
                     UARTprintf("Receiving base 1 sequence\n\r");
 
@@ -793,11 +805,28 @@ static void StateMachineDevice0(BaseEvent_t event)
                 // If message is coming from another source
                 else
                 {
+                    timeout_count++;
+
+                    if (timeout_count == RX_MAX_RCT_TIMEOUT_COUNT)
+                    {
+                        UARTprintf("No message from base 1. Restarting cycle\n\r");
+
+                        base_state = BASE_WAITING_TRACKER_SEQ;
+
+                        timeout_count = 0;
+                    }
+
+                    Radio.Rx(RX_RCT_SIL_TIMEOUT_VALUE_US);
+
                     break;
                 }
             }
             else if (event == TIMEOUT)
             {
+                UARTprintf("No message from base 1. Restarting cycle\n\r");
+
+                Radio.Rx(RX_RCT_SIL_TIMEOUT_VALUE_US);
+
                 base_state = BASE_WAITING_TRACKER_SEQ;
                 break;
             }
@@ -809,14 +838,18 @@ static void StateMachineDevice0(BaseEvent_t event)
                 timestamp_buffer_base1[timestamp_index] = msg->timestamp;
                 timestamp_index++;
 
-                UARTprintf("size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d",BufferSize,RssiValue,SnrValue,msg->timestamp,msg->device_id);
+                UARTprintf("size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d\r\n",BufferSize,RssiValue,SnrValue,msg->timestamp,msg->device_id);
                 // UARTprintf("Received: %d, Error: %d, Sum: %d \n\r",TimesReceived, TimesError, (TimesReceived+TimesError));
 
                 Radio.Rx(RX_RCT_SEQ_TIMEOUT_VALUE_US);
             }
             else if (event == TIMEOUT)
             {
-                base_state = BASE_RECEIVING_BASE1_SEQ;
+                Radio.Rx(RX_RCT_SIL_TIMEOUT_VALUE_US);
+
+                UARTprintf("Base 1 sequence reception over\r\n\r\n");
+
+                base_state = BASE_WAITING_BASE2_SEQ;
             }
         }
         break;
@@ -824,8 +857,8 @@ static void StateMachineDevice0(BaseEvent_t event)
         case BASE_WAITING_BASE2_SEQ:
             if (event == MESSAGE_RECEIVED)
             {
-                // If message is coming from base 1
-                if (msg->device_id >= 3)
+                // If message is coming from base 2
+                if (msg->device_id == 2)
                 {
                     UARTprintf("Receiving base 2 sequence\n\r");
 
@@ -834,11 +867,28 @@ static void StateMachineDevice0(BaseEvent_t event)
                 // If message is coming from another source
                 else
                 {
+                    timeout_count++;
+
+                    if (timeout_count == RX_MAX_RCT_TIMEOUT_COUNT)
+                    {
+                        UARTprintf("No message from base 2. Restarting cycle\n\r");
+
+                        base_state = BASE_WAITING_TRACKER_SEQ;
+
+                        timeout_count = 0;
+                    }
+
+                    Radio.Rx(RX_RCT_SIL_TIMEOUT_VALUE_US);
+
                     break;
                 }
             }
             else if (event == TIMEOUT)
             {
+                UARTprintf("No message from base 2. Restarting cycle\n\r");
+
+                Radio.Rx(RX_RCT_SIL_TIMEOUT_VALUE_US);
+
                 base_state = BASE_WAITING_TRACKER_SEQ;
                 break;
             }
@@ -850,13 +900,17 @@ static void StateMachineDevice0(BaseEvent_t event)
                 timestamp_buffer_base2[timestamp_index] = msg->timestamp;
                 timestamp_index++;
 
-                UARTprintf("size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d",BufferSize,RssiValue,SnrValue,msg->timestamp,msg->device_id);
+                UARTprintf("size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d\r\n",BufferSize,RssiValue,SnrValue,msg->timestamp,msg->device_id);
                 // UARTprintf("Received: %d, Error: %d, Sum: %d \n\r",TimesReceived, TimesError, (TimesReceived+TimesError));
 
                 Radio.Rx(RX_RCT_SEQ_TIMEOUT_VALUE_US);
             }
             else if (event == TIMEOUT)
             {
+                Radio.Rx(RX_RCT_SIL_TIMEOUT_VALUE_US);
+
+                UARTprintf("Base 2 sequence reception over\r\n\r\n");
+
                 base_state = BASE_WAITING_TRACKER_SEQ;
             }
         }
@@ -864,7 +918,7 @@ static void StateMachineDevice0(BaseEvent_t event)
 
         default:
         {
-
+            UARTprintf("FATAL ERROR");
         }
         break;
     }
@@ -878,7 +932,10 @@ static void StateMachineDevice1(BaseEvent_t event)
 {
     TimestampMessage_t *msg = (TimestampMessage_t *)Buffer;
     static uint16_t timestamp_index = 0;
+    static uint16_t timeout_count = 0;
     TimestampMessage_t msg_tx;
+    
+    State = IDLE;
 
     switch (base_state)
     {
@@ -902,33 +959,52 @@ static void StateMachineDevice1(BaseEvent_t event)
                 // If message is coming from a base
                 else
                 {
-                    // Enter reception mode
                     Radio.Rx(RX_RCT_SIL_TIMEOUT_VALUE_US);
                     break;
                 }
+            }
+            else if (event == TIMEOUT)
+            {
+                UARTprintf("Timeout waiting tracker\r\n\r\n");
+                Radio.Rx(RX_RCT_SIL_TIMEOUT_VALUE_US);
+                break;
             }
         case BASE_RECEIVING_TRACKER_SEQ:
         {
             if (event == MESSAGE_RECEIVED)
             {
-                curr_time_ns = GetCurrentTimeNs();
+                if (msg->device_id >= 3)
+                {
+                    curr_time_ns = GetCurrentTimeNs();
 
-                // Insert timestamp in buffer
-                timestamp_buffer[timestamp_index] = curr_time_ns;
-                timestamp_index++;
+                    // Insert timestamp in buffer
+                    timestamp_buffer[timestamp_index] = curr_time_ns;
+                    timestamp_index++;
 
-                UARTprintf("size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\n\r",BufferSize,RssiValue,SnrValue,curr_time_ns,Buffer[0],Buffer[1]);
-                // UARTprintf("Received: %d, Error: %d, Sum: %d \n\r",TimesReceived, TimesError, (TimesReceived+TimesError));
+                    UARTprintf("size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\n\r",BufferSize,RssiValue,SnrValue,curr_time_ns,Buffer[0],Buffer[1]);
+                    // UARTprintf("Received: %d, Error: %d, Sum: %d \n\r",TimesReceived, TimesError, (TimesReceived+TimesError));
 
-                Radio.Rx(RX_RCT_SEQ_TIMEOUT_VALUE_US);
+                    Radio.Rx(RX_RCT_SEQ_TIMEOUT_VALUE_US);
+                }
+                else
+                {
+                    Radio.Rx(RX_RCT_SEQ_TIMEOUT_VALUE_US);
+                }
             }
             else if (event == TIMEOUT)
             {
+                UARTprintf("Tracker sequence reception over\r\n\r\n");
+
+                UARTprintf("Start transmission\r\n");
+
+                DELAY_MS(10 * TX_SEQUENCE_PERIOD_MS);
+
                 // Start transmitting
                 timestamp_index = 0;
                 msg_tx.device_id = DEVICE_ID;
                 msg_tx.timestamp = timestamp_buffer[timestamp_index];
                 timestamp_index++;
+                UARTprintf("timestamp: %d, msg_id: %d\n\r",msg_tx.timestamp,msg_tx.message_id);
                 TransmitMessage((uint8_t *)&msg_tx, sizeof(msg_tx), TX_SEQUENCE_PERIOD_MS);
 
                 base_state = BASE_TRANSMITTING;
@@ -945,12 +1021,15 @@ static void StateMachineDevice1(BaseEvent_t event)
                     msg_tx.device_id = DEVICE_ID;
                     msg_tx.timestamp = timestamp_buffer[timestamp_index];
                     timestamp_index++;
+                    UARTprintf("timestamp: %d, msg_id: %d\n\r",msg_tx.timestamp,msg_tx.message_id);
                     TransmitMessage((uint8_t *)&msg_tx, sizeof(msg_tx), TX_SEQUENCE_PERIOD_MS);
                 }
                 else
                 {
                     // Enter reception mode
                     Radio.Rx(RX_RCT_SIL_TIMEOUT_VALUE_US);
+
+                    UARTprintf("Transmission over\r\n\r\n");
 
                     base_state = BASE_WAITING_BASE2_SEQ;
                 }
@@ -965,16 +1044,33 @@ static void StateMachineDevice1(BaseEvent_t event)
                 // If message is coming from base 2
                 if (msg->device_id == 2)
                 {
+                    UARTprintf("Receiving base 2 sequence\n\r");
+
+                    base_state = BASE_RECEIVING_BASE2_SEQ;
+
                     Radio.Rx(RX_RCT_SEQ_TIMEOUT_VALUE_US);
-                    base_state = BASE_RECEIVING_TRACKER_SEQ;
                 }
+                // If message is coming from another source
                 else
                 {
+                    timeout_count++;
+
+                    if (timeout_count == RX_MAX_RCT_TIMEOUT_COUNT)
+                    {
+                        UARTprintf("No message from base 2. Restarting cycle\n\r");
+
+                        base_state = BASE_WAITING_TRACKER_SEQ;
+
+                        timeout_count = 0;
+                    }
+
                     Radio.Rx(RX_RCT_SIL_TIMEOUT_VALUE_US);
                 }
             }
             else if (event == TIMEOUT)
             {
+                UARTprintf("No message from base 2. Restarting cycle\n\r");
+
                 Radio.Rx(RX_RCT_SIL_TIMEOUT_VALUE_US);
 
                 base_state = BASE_WAITING_TRACKER_SEQ;
@@ -991,6 +1087,10 @@ static void StateMachineDevice1(BaseEvent_t event)
             }
             else if (event == TIMEOUT)
             {
+                UARTprintf("Base 2 sequence reception over. Restarting cycle\r\n\r\n");
+
+                Radio.Rx(RX_RCT_SIL_TIMEOUT_VALUE_US);
+
                 base_state = BASE_WAITING_TRACKER_SEQ;
             }
         }
@@ -998,12 +1098,10 @@ static void StateMachineDevice1(BaseEvent_t event)
 
         default:
         {
-
+            UARTprintf("FATAL ERROR");
         }
         break;
     }
-
-    State = IDLE;
 }
 #endif
 
@@ -1012,7 +1110,10 @@ static void StateMachineDevice2(BaseEvent_t event)
 {
     TimestampMessage_t *msg = (TimestampMessage_t *)Buffer;
     static uint16_t timestamp_index = 0;
+    static uint16_t timeout_count = 0;
     TimestampMessage_t msg_tx;
+
+    State = IDLE;
 
     switch (base_state)
     {
@@ -1058,6 +1159,8 @@ static void StateMachineDevice2(BaseEvent_t event)
             }
             else if (event == TIMEOUT)
             {
+                UARTprintf("Tracker sequence reception over\r\n\r\n");
+
                 Radio.Rx(RX_RCT_SIL_TIMEOUT_VALUE_US);
 
                 base_state = BASE_WAITING_BASE1_SEQ;
@@ -1072,16 +1175,33 @@ static void StateMachineDevice2(BaseEvent_t event)
                 // If message is coming from base 1
                 if (msg->device_id == 1)
                 {
-                    Radio.Rx(RX_RCT_SEQ_TIMEOUT_VALUE_US);
+                    UARTprintf("Receiving base 1 sequence\n\r");
+
                     base_state = BASE_RECEIVING_BASE1_SEQ;
+
+                    Radio.Rx(RX_RCT_SEQ_TIMEOUT_VALUE_US);
                 }
+                // If message is coming from another source
                 else
                 {
+                    timeout_count++;
+
+                    if (timeout_count == RX_MAX_RCT_TIMEOUT_COUNT)
+                    {
+                        UARTprintf("No message from base 1. Restarting cycle\n\r");
+
+                        base_state = BASE_WAITING_TRACKER_SEQ;
+
+                        timeout_count = 0;
+                    }
+
                     Radio.Rx(RX_RCT_SIL_TIMEOUT_VALUE_US);
                 }
             }
             else if (event == TIMEOUT)
             {
+                UARTprintf("No message from base 1. Restarting cycle\n\r");
+
                 Radio.Rx(RX_RCT_SIL_TIMEOUT_VALUE_US);
 
                 base_state = BASE_WAITING_TRACKER_SEQ;
@@ -1098,10 +1218,19 @@ static void StateMachineDevice2(BaseEvent_t event)
             }
             else if (event == TIMEOUT)
             {
+                UARTprintf("Base 1 sequence reception over\r\n\r\n");
+
+                UARTprintf("Start transmission\r\n");
+
+                DELAY_MS(10 * TX_SEQUENCE_PERIOD_MS);
+
                 // Start transmitting
                 timestamp_index = 0;
                 msg_tx.device_id = DEVICE_ID;
                 msg_tx.timestamp = timestamp_buffer[timestamp_index];
+
+                UARTprintf("timestamp: %d, msg_id: %d\n\r",msg_tx.timestamp,msg_tx.message_id);
+
                 timestamp_index++;
                 TransmitMessage((uint8_t *)&msg_tx, sizeof(msg_tx), TX_SEQUENCE_PERIOD_MS);
 
@@ -1119,10 +1248,15 @@ static void StateMachineDevice2(BaseEvent_t event)
                     msg_tx.device_id = DEVICE_ID;
                     msg_tx.timestamp = timestamp_buffer[timestamp_index];
                     timestamp_index++;
+
+                    UARTprintf("timestamp: %d, msg_id: %d\n\r",msg_tx.timestamp,msg_tx.message_id);
+
                     TransmitMessage((uint8_t *)&msg_tx, sizeof(msg_tx), TX_SEQUENCE_PERIOD_MS);
                 }
                 else
                 {
+                    UARTprintf("Transmission over. Restarting cycle\r\n\r\n");
+
                     // Enter reception mode
                     Radio.Rx(RX_RCT_SIL_TIMEOUT_VALUE_US);
 
@@ -1134,11 +1268,9 @@ static void StateMachineDevice2(BaseEvent_t event)
 
         default:
         {
-
+            UARTprintf("FATAL ERROR");
         }
         break;
     }
-
-    State = IDLE;
 }
 #endif

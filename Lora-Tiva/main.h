@@ -24,7 +24,7 @@
 #define TX_MESSAGES_PER_SEQUENCE            50
 
 #define TX_SEQUENCE_PERIOD_MS               200
-#define TX_SILENCE_PERIOD_MS                30000
+#define TX_SILENCE_PERIOD_MS                45000
 #define TX_TIMEOUT_SILENCE_PERIOD_MS        5000
 
 #define NS_PER_TICK                         125
