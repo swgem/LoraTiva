@@ -296,8 +296,6 @@ int main(void)
 #endif
 
 #ifdef DEVICE_MODE_BASE
-    uint8_t reception_timeout_count = 0;
-
     // Clear timestamp buffer
     SetWordBuffer(timestamp_buffer,
                   -1,
@@ -332,12 +330,6 @@ int main(void)
 
             case RECEPTION_TIMEOUT:
             {
-                reception_timeout_count++;
-
-                if (reception_timeout_count == RX_MAX_RCT_TIMEOUT_COUNT)
-                {
-                    reception_timeout_count = 0;
-
 #if (DEVICE_ID == 0)
                     StateMachineDevice0(TIMEOUT);
 #elif (DEVICE_ID == 1)
@@ -345,13 +337,6 @@ int main(void)
 #elif (DEVICE_ID == 2)
                     StateMachineDevice2(TIMEOUT);
 #endif
-                }
-                else
-                {
-                    Radio.Rx(RX_RCT_SEQ_TIMEOUT_VALUE_US);
-
-                    State = IDLE;
-                }
             }
             break;
 
