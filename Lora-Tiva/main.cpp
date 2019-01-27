@@ -758,7 +758,7 @@ static void StateMachineDevice0(BaseEvent_t event)
                     // Insert timestamp in buffer
                     timestamp_buffer[msg->message_id] = curr_time_ns;
 
-                    UARTprintf("size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\n\r",BufferSize,RssiValue,SnrValue,curr_time_ns,Buffer[0],Buffer[1]);
+                    UARTprintf("size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\n\r",BufferSize,RssiValue,SnrValue,curr_time_ns,msg->device_id,msg->message_id);
                     // UARTprintf("Received: %d, Error: %d, Sum: %d \n\r",TimesReceived, TimesError, (TimesReceived+TimesError));
 
                     if (msg->message_id == RX_LAST_MESSAGE_ID)
@@ -774,7 +774,7 @@ static void StateMachineDevice0(BaseEvent_t event)
                 }
                 else
                 {
-                    UARTprintf("Wrong reception!! size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\n\r",BufferSize,RssiValue,SnrValue,curr_time_ns,Buffer[0],Buffer[1]);
+                    UARTprintf("Wrong reception!! size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\n\r",BufferSize,RssiValue,SnrValue,curr_time_ns,msg->device_id,msg->message_id);
                     Radio.Rx(RX_RCT_SEQ_TIMEOUT_VALUE_US);
                 }
             }
@@ -850,7 +850,7 @@ static void StateMachineDevice0(BaseEvent_t event)
                 }
                 else
                 {
-                    UARTprintf("Wrong reception!! size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\n\r",BufferSize,RssiValue,SnrValue,curr_time_ns,Buffer[0],Buffer[1]);
+                    UARTprintf("Wrong reception!! size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\n\r",BufferSize,RssiValue,SnrValue,curr_time_ns,msg->device_id,msg->message_id);
                     Radio.Rx(RX_RCT_SEQ_TIMEOUT_VALUE_US);
                 }
             }
@@ -926,7 +926,7 @@ static void StateMachineDevice0(BaseEvent_t event)
                 }
                 else
                 {
-                    UARTprintf("Wrong reception!! size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\n\r",BufferSize,RssiValue,SnrValue,curr_time_ns,Buffer[0],Buffer[1]);
+                    UARTprintf("Wrong reception!! size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\n\r",BufferSize,RssiValue,SnrValue,curr_time_ns,msg->device_id,msg->message_id);
                     Radio.Rx(RX_RCT_SEQ_TIMEOUT_VALUE_US);
                 }
             }
@@ -1003,7 +1003,7 @@ static void StateMachineDevice1(BaseEvent_t event)
                     // Insert timestamp in buffer
                     timestamp_buffer[msg->message_id] = curr_time_ns;
 
-                    UARTprintf("size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\n\r",BufferSize,RssiValue,SnrValue,curr_time_ns,Buffer[0],Buffer[1]);
+                    UARTprintf("size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\n\r",BufferSize,RssiValue,SnrValue,curr_time_ns,msg->device_id,msg->message_id);
                     // UARTprintf("Received: %d, Error: %d, Sum: %d \n\r",TimesReceived, TimesError, (TimesReceived+TimesError));
 
                     if (msg->message_id == RX_LAST_MESSAGE_ID)
@@ -1031,7 +1031,7 @@ static void StateMachineDevice1(BaseEvent_t event)
                 }
                 else
                 {
-                    UARTprintf("Wrong reception!! size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\n\r",BufferSize,RssiValue,SnrValue,curr_time_ns,Buffer[0],Buffer[1]);
+                    UARTprintf("Wrong reception!! size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\n\r",BufferSize,RssiValue,SnrValue,curr_time_ns,msg->device_id,msg->message_id);
                     Radio.Rx(RX_RCT_SEQ_TIMEOUT_VALUE_US);
                 }
             }
@@ -1092,6 +1092,8 @@ static void StateMachineDevice1(BaseEvent_t event)
                 {
                     UARTprintf("Receiving base 2 sequence\n\r");
 
+                    UARTprintf("size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\n\r",BufferSize,RssiValue,SnrValue,msg->timestamp,msg->device_id,msg->message_id);
+
                     base_state = BASE_RECEIVING_BASE2_SEQ;
 
                     Radio.Rx(RX_RCT_SEQ_TIMEOUT_VALUE_US);
@@ -1130,6 +1132,8 @@ static void StateMachineDevice1(BaseEvent_t event)
             {
                 if (msg->device_id == 2)
                 {
+                    UARTprintf("size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\n\r",BufferSize,RssiValue,SnrValue,msg->timestamp,msg->device_id,msg->message_id);
+
                     if (msg->message_id == RX_LAST_MESSAGE_ID)
                     {
                         UARTprintf("Base 2 sequence reception over. Restarting cycle\r\n\r\n");
@@ -1212,7 +1216,7 @@ static void StateMachineDevice2(BaseEvent_t event)
                     // Insert timestamp in buffer
                     timestamp_buffer[msg->message_id] = curr_time_ns;
 
-                    UARTprintf("size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\n\r",BufferSize,RssiValue,SnrValue,curr_time_ns,Buffer[0],Buffer[1]);
+                    UARTprintf("size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\n\r",BufferSize,RssiValue,SnrValue,curr_time_ns,msg->device_id,msg->message_id);
                     // UARTprintf("Received: %d, Error: %d, Sum: %d \n\r",TimesReceived, TimesError, (TimesReceived+TimesError));
 
                     if (msg->message_id == RX_LAST_MESSAGE_ID)
@@ -1228,7 +1232,7 @@ static void StateMachineDevice2(BaseEvent_t event)
                 }
                 else
                 {
-                    UARTprintf("Wrong reception!! size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\n\r",BufferSize,RssiValue,SnrValue,curr_time_ns,Buffer[0],Buffer[1]);
+                    UARTprintf("Wrong reception!! size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\n\r",BufferSize,RssiValue,SnrValue,curr_time_ns,msg->device_id,msg->message_id);
                     Radio.Rx(RX_RCT_SEQ_TIMEOUT_VALUE_US);
                 }
             }
@@ -1251,6 +1255,8 @@ static void StateMachineDevice2(BaseEvent_t event)
                 if (msg->device_id == 1)
                 {
                     UARTprintf("Receiving base 1 sequence\n\r");
+
+                    UARTprintf("size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\n\r",BufferSize,RssiValue,SnrValue,msg->timestamp,msg->device_id,msg->message_id);
 
                     base_state = BASE_RECEIVING_BASE1_SEQ;
 
@@ -1290,6 +1296,8 @@ static void StateMachineDevice2(BaseEvent_t event)
             {
                 if (msg->device_id == 1)
                 {
+                    UARTprintf("size: %d, rss: %d, snr: %d, timestamp: %d, device_id: %d, msg_id: %d\n\r",BufferSize,RssiValue,SnrValue,msg->timestamp,msg->device_id,msg->message_id);
+
                     if (msg->message_id == RX_LAST_MESSAGE_ID)
                     {
                         UARTprintf("Base 2 sequence reception over. Restarting cycle\r\n\r\n");
