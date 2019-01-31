@@ -100,6 +100,8 @@ static void ConfigureUART(void);
 
 static void blue_led(uint8_t led);
 
+static void yellow_led(uint8_t led);
+
 static void ConfigureSpiPreciseClk(void);
 
 static uint32_t GetCurrentTimeNs(void);
@@ -147,9 +149,11 @@ int main(void)
     ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
 
     //
-    // Enable the GPIO pins for the LED (PF2 & PF3).
+    // Enable the GPIO pins for the LED (PF1, PF2 & PF3).
     //
+    ROM_GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_1);
     ROM_GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_2);
+    ROM_GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_3);
 
     //
     // Initialize the UART.
@@ -327,6 +331,9 @@ int main(void)
 #elif (DEVICE_ID == 2)
                 StateMachineDevice2(MESSAGE_RECEIVED);
 #endif
+                yellow_led(1);
+                DELAY_MS(BLINK_PERIOD_MS);
+                yellow_led(0);
             }
             break;
 
@@ -597,6 +604,27 @@ static void blue_led(uint8_t led)
         // Turn off the BLUE LED.
         //
         GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, 0);
+    }
+}
+
+static void yellow_led(uint8_t led)
+{
+
+    if(led)
+    {
+        //
+        // Turn on the YELLOW LED.
+        //
+        GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, GPIO_PIN_1);
+        GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, GPIO_PIN_3);
+    }
+    else
+    {
+        //
+        // Turn off the YELLOW LED.
+        //
+        GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, 0);
+        GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, 0);
     }
 }
 
