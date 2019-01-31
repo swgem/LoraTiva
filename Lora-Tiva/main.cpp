@@ -197,7 +197,9 @@ int main(void)
         DELAY_MS(100);
     }
 
-    UARTprintf("Radio Version: %d!\n\r", radio_version);
+    UARTprintf("Radio Version: %d\n\r", radio_version);
+
+    UARTprintf("Device ID: %d\r\n", DEVICE_ID);
 
     if (Radio.DetectBoardType( ) == SX1276MB1LAS)
     {
