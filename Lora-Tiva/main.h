@@ -58,7 +58,7 @@
 
 /****** MACRO FUNCTIONS ******/
 
-#define DELAY_MS(timeMs)    SysCtlDelay((SysCtlClockGet() / (1000*6)) * timeMs)
+#define DELAY_MS(timeMs)    SysCtlDelay((SysCtlClockGet() / (1000*6)) * (timeMs))
 
 /****** DEFINES FOR LORA MIDDLEWARE ******/
 
