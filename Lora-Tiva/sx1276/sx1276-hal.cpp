@@ -22,8 +22,7 @@ Maintainers: Miguel Luis, Gregory Cristian and Nicolas Huguenin
 #include "driverlib/ssi.h"
 #include "driverlib/sysctl.h"
 #include "driverlib/pin_map.h"
-
-extern uint8_t lora_board_connected;
+#include "../config.h"
 
 //definicao de pinos
 
@@ -58,7 +57,13 @@ SX1276MB1xAS::SX1276MB1xAS( RadioEvents_t *events/*,
 {
     this->RadioEvents = events;
 
-    boardConnected = lora_board_connected;
+#if defined(LORA_BOARD_MAS_INAIR9)
+    boardConnected = SX1276MB1MAS;
+#elif defined(LORA_BOARD_LAS_INAIR9B)
+    boardConnected = SX1276MB1LAS;
+#else
+    #error "Please define a valid lora board."
+#endif
 
     //liga o clock da porta E (necessário para o reset)
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOE);
