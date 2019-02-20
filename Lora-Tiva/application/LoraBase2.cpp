@@ -203,15 +203,15 @@ void LoraBase::execute_state_machine(BaseEvents_e event)
 void LoraBase::print_rcvd_timestamp_message(uint32_t timestamp)
 {
     this->board->UARTcout << "Received, "
-                          << "rssi: "       << this->received_msg.rssi         << ", "
+                          << "timestamp: "  << timestamp                       << ", "
                           << "snr: "        << this->received_msg.snr          << ", "
-                          << "timestamp: "  << timestamp                       << "; "
+                          << "rssi: "       << this->received_msg.rssi         << "; "
                           << "Payload, "
                           << "device_id: "  << this->timestamp_msg->device_id  << ", "
                           << "message_id: " << this->timestamp_msg->message_id << ", "
                           << "timestamp: "  << this->timestamp_msg->timestamp  << ", "
-                          << "snr: "        << this->timestamp_msg->rssi       << ", "
-                          << "rssi: "       << this->timestamp_msg->snr
+                          << "rssi: "       << this->timestamp_msg->rssi       << ", "
+                          << "snr: "        << this->timestamp_msg->snr
                           << "\r\n";
 
     return;
