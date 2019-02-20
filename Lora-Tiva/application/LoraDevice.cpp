@@ -164,7 +164,7 @@ void LoraDevice::config_radio(void)
 #error "Please define a modem in the compiler options."
 #endif
 
-    // this->board->delay_ms(5000);
+    this->board->test_blink_led(INIT_LORA_TEST_PERIOD, INIT_TEST_BLINK_PERIOD);
 
     return;
 }

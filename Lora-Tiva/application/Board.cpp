@@ -1,6 +1,7 @@
 #include <cstdint>
 #include "Board.h"
 #include "LedColors.h"
+#include "../config.h"
 #include "inc/hw_memmap.h"
 #include "inc/hw_types.h"
 #include "driverlib/debug.h"
@@ -44,7 +45,7 @@ void Board::init(void)
     // Initialize the UART
     this->configure_uart();
 
-    // this->delay_ms(5000);
+    this->test_blink_led(INIT_BOARD_TEST_PERIOD, INIT_TEST_BLINK_PERIOD);
 
     return;
 }
@@ -108,6 +109,33 @@ void Board::turn_off_led(void)
     GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, 0);
     GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, 0);
     GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, 0);
+
+    return;
+}
+
+void Board::test_blink_led(const uint32_t test_period_ms, const uint32_t blink_period_ms)
+{
+    uint8_t on = false;
+    uint32_t remaining_time_ms = test_period_ms;
+
+    while (remaining_time_ms > (blink_period_ms / 2))
+    {
+        if (on)
+        {
+            this->turn_off_led();
+            on = false;
+        }
+        else
+        {
+            this->turn_on_led(LedColors_e::WHITE);
+            on = true;
+        }
+
+        this->delay_ms(blink_period_ms / 2);
+        remaining_time_ms -= (blink_period_ms / 2);
+    }
+
+    this->turn_off_led();
 
     return;
 }

@@ -28,6 +28,12 @@
 #define RX_MAX_RCT_WRONG_RECEPTION_COUNT    3
 #define RX_PAYLOAD_SIZE                     32
 
+// TIMING CONFIGURATIONS FOR BLINK TEST DURING INITILIZATION
+
+#define INIT_BOARD_TEST_PERIOD              5000
+#define INIT_LORA_TEST_PERIOD               5000
+#define INIT_TEST_BLINK_PERIOD              1000
+
 /****************************************/
 /******** APPLICATION DEFINITIONS *******/
 /****************************************/
