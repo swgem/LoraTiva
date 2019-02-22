@@ -150,7 +150,7 @@ void LoraBase::execute_state_machine(BaseEvents_e event)
             {
                 this->board->UARTcout << "Tracker sequence reception over\r\n\r\n";
 
-                this->radio->Rx(RX_RCT_SIL_BASE_TIMEOUT_US);
+                this->radio->Rx(10000);
 
                 this->base_state = BaseStates_e::BASE_WAITING_BASE1_SEQ;
             }
@@ -160,7 +160,7 @@ void LoraBase::execute_state_machine(BaseEvents_e event)
         case BaseStates_e::BASE_WAITING_BASE1_SEQ:
             this->board->UARTcout << "Waiting for base 1 transmission\r\n\r\n";
             this->board->delay_ms(RX_RCT_SIL_BASE_TIMEOUT_US / 1000);
-            this->board->delay_ms(10 * TX_SEQUENCE_PERIOD_MS);
+            this->board->delay_ms(20 * TX_SEQUENCE_PERIOD_MS);
             this->base_state = BaseStates_e::BASE_TRANSMITTING;
             event = BaseEvents_e::MESSAGE_TRANSMITTED;
             this->timestamp_index = 0;

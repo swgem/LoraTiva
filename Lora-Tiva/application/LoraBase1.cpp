@@ -133,7 +133,7 @@ void LoraBase::execute_state_machine(BaseEvents_e event)
                         this->board->UARTcout << "Tracker sequence reception over\r\n\r\n";
                         this->board->UARTcout << "Start transmission\r\n";
 
-                        this->board->delay_ms(10 * TX_SEQUENCE_PERIOD_MS);
+                        this->board->delay_ms(20 * TX_SEQUENCE_PERIOD_MS);
 
                         // Start transmitting
                         this->timestamp_index = 0;
@@ -166,7 +166,7 @@ void LoraBase::execute_state_machine(BaseEvents_e event)
 
                 this->board->UARTcout << "Starting transmission\r\n";
 
-                this->board->delay_ms(10 * TX_SEQUENCE_PERIOD_MS);
+                this->board->delay_ms(20 * TX_SEQUENCE_PERIOD_MS);
 
                 // Start transmitting
                 this->timestamp_index = 0;

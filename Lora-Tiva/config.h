@@ -15,7 +15,7 @@
 
 #define TX_MESSAGES_PER_SEQUENCE            50
 #define TX_SEQUENCE_PERIOD_MS               200
-#define TX_SILENCE_PERIOD_MS                45000
+#define TX_SILENCE_PERIOD_MS                60000
 #define TX_TIMEOUT_SILENCE_PERIOD_MS        5000
 #define TX_RCT_TIMEOUT_VALUE_US             100000000
 #define RX_RCT_SEQ_TIMEOUT_US               10 * TX_SEQUENCE_PERIOD_MS * 1000
