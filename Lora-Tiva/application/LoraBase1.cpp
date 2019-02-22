@@ -67,7 +67,7 @@ void LoraBase::init(void)
     // Clear timestamp buffer
     this->set_word_buffer((int32_t*)this->timestamp_buffer,
                           -1,
-                          sizeof(this->timestamp_buffer) / sizeof(this->timestamp_buffer[0]));
+                          sizeof(this->timestamp_buffer) / sizeof(int32_t));
 
     // Enter reception mode
     radio->Rx(RX_RCT_SIL_TRACKER_TIMEOUT_US);
@@ -88,6 +88,7 @@ void LoraBase::set_word_buffer(int32_t *buffer, int32_t value, uint32_t size)
 void LoraBase::execute_state_machine(BaseEvents_e event)
 {
     uint32_t curr_time_ns = this->precise_clock_manager.get_current_time_ns();
+    uint32_t rx_seq_wait_time_us = RX_RCT_SEQ_TIMEOUT_US;
 
     switch (this->base_state)
     {
@@ -98,7 +99,7 @@ void LoraBase::execute_state_machine(BaseEvents_e event)
                 {
                     this->set_word_buffer((int32_t*)this->timestamp_buffer,
                                           -1,
-                                          sizeof(this->timestamp_buffer) / sizeof(this->timestamp_buffer[0]));
+                                          sizeof(this->timestamp_buffer) / sizeof(int32_t));
 
                     this->board->UARTcout << "Receiving tracker sequence\r\n";
 
@@ -106,6 +107,8 @@ void LoraBase::execute_state_machine(BaseEvents_e event)
                 }
                 else
                 {
+                    this->board->UARTcout << "Wrong reception!! ";
+                    this->print_rcvd_timestamp_message(curr_time_ns);
                     this->radio->Rx(RX_RCT_SIL_TRACKER_TIMEOUT_US);
                     break;
                 }
@@ -150,7 +153,11 @@ void LoraBase::execute_state_machine(BaseEvents_e event)
                     }
                     else
                     {
-                        this->radio->Rx(RX_RCT_SEQ_TIMEOUT_US);
+                        rx_seq_wait_time_us += TX_TRANSMISSION_PERIOD_US
+                                               - (TX_TRANSMISSION_PERIOD_US
+                                                  * this->timestamp_msg->message_id)
+                                                 / TX_MESSAGES_PER_SEQUENCE;
+                        this->radio->Rx(rx_seq_wait_time_us);
                     }
                 }
                 else
@@ -223,7 +230,11 @@ void LoraBase::execute_state_machine(BaseEvents_e event)
 
                     this->base_state = BaseStates_e::BASE_RECEIVING_BASE2_SEQ;
 
-                    this->radio->Rx(RX_RCT_SEQ_TIMEOUT_US);
+                    rx_seq_wait_time_us += TX_TRANSMISSION_PERIOD_US
+                                               - (TX_TRANSMISSION_PERIOD_US
+                                                  * this->timestamp_msg->message_id)
+                                                 / TX_MESSAGES_PER_SEQUENCE;
+                    this->radio->Rx(rx_seq_wait_time_us);
                 }
                 else
                 {
@@ -241,6 +252,8 @@ void LoraBase::execute_state_machine(BaseEvents_e event)
                     }
                     else
                     {
+                        this->board->UARTcout << "Wrong reception!! ";
+                        this->print_rcvd_timestamp_message(curr_time_ns);
                         this->radio->Rx(RX_RCT_SIL_BASE_TIMEOUT_US);
                     }
                 }
@@ -272,11 +285,17 @@ void LoraBase::execute_state_machine(BaseEvents_e event)
                     }
                     else
                     {
-                        this->radio->Rx(RX_RCT_SEQ_TIMEOUT_US);
+                        rx_seq_wait_time_us += TX_TRANSMISSION_PERIOD_US
+                                               - (TX_TRANSMISSION_PERIOD_US
+                                                  * this->timestamp_msg->message_id)
+                                                 / TX_MESSAGES_PER_SEQUENCE;
+                        this->radio->Rx(rx_seq_wait_time_us);
                     }
                 }
                 else
                 {
+                    this->board->UARTcout << "Wrong reception!! ";
+                    this->print_rcvd_timestamp_message(curr_time_ns);
                     this->radio->Rx(RX_RCT_SEQ_TIMEOUT_US);
                 }
             }
